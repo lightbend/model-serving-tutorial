@@ -40,3 +40,4 @@ killrweather-modellistener/src/main/resources/killrweatheModelListenerDocker.jso
 killrweather.yaml
 loaderinstall.yaml
 *.swp
+/cpt/
