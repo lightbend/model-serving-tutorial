@@ -169,3 +169,77 @@ Rest APIs also allow to serve model:
 curl -X POST http://localhost:8501/v1/models/wine/versions/1:predict -d '{"signature_name":"predict","instances":[{"inputs":[{"dense_1_input":[7.4, 0.7, 0.0, 1.9, 0.076, 11.0, 34.0, 0.9978, 3.51, 0.56, 9.4, 5.0]}]}]}'
 
 ````
+
+
+## Using Dynamically controlled Streams for model serving
+
+Such implementation basically requires a stateful stream processing for the main data stream with the state being updatable by a second stream - state update stream. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
+![Image](images/Dynamically%20controlled%20streams.png).
+In this tutorial we will demostrate how to implement this approach leveraging the popular streaming framework - [Akka Streams](https://doc.akka.io/docs/akka/2.5/stream/) and Streaming servers -
+[Spark structured Streaming](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html) and [Flink](https://flink.apache.org/). But before delving into implementations lets 
+discuss 4 support projects:
+
+### Protobufs
+
+This is a supporting project defining 2 [Google Protobuf](https://developers.google.com/protocol-buffers/) Schemas - model and Data.
+Model is a generic schema allows to support a lot of different model implementations - we will use 2 throughout the code -
+[PMML](http://dmg.org/pmml/v4-3/GeneralStructure.html) and [Tensorflow](https://www.tensorflow.org/).
+For Tensorflow, there are 2 options to save model - [optimized](https://blog.metaflow.fr/tensorflow-how-to-freeze-a-model-and-serve-it-with-a-python-api-d4f3596b3adc) and [Saved Model Bundle](https://www.tensorflow.org/api_docs/java/reference/org/tensorflow/SavedModelBundle) (the one used by tensorflow bundle).
+You can find the code for both, but we will only used optimized in our examples.
+
+### Client
+
+For all of the code examples we are using [Kafka](https://kafka.apache.org/) to implement both data and model streams.
+Client code is used to implement (send) both Model and Data streams.
+
+In addition this project includes local Kafka server implementing Kafka without downloading and installing Kafka on your box.
+
+To Start client, run [DataProvider](client/src/main/scala/com/lightbenf/modelserving/client/client/DataProvider.scala) class ()in Intellij just left click on the file and pick run). Additionally
+you can use [DataReader](client/src/main/scala/com/lightbenf/modelserving/client/client/DataReader.scala) to validate that everything is working correctly and messages are published.
+
+### Configuration
+
+To make sure that the same Kafka brokers and topics are used across all implementations configuration project contains all of this information.
+
+### Model
+
+This project incorporates the basic model and data operations. The omplementation is split into two main parts -
+generic, implementation that does not depend on data and Wine model, specific for the wine model.
+
+### Akka Streams implementation
+
+This implementation shows how to use Akka Stream (along with [Akka Actors](https://doc.akka.io/docs/akka/current/typed/guide/actors-motivation.html#why-modern-systems-need-a-new-programming-model) and [Akka HTTP](https://doc.akka.io/docs/akka-http/current/))
+for implementing model serving leveraging dynamically controlled stream pattern. 
+
+The implementation is using Akka Streams with [Reactive Kafka](https://github.com/akka/alpakka-kafka) for connecting to Kafka and Akka Actors for implementing execution state. 
+
+Akka Actors's implementation is leveraging [Akka Typed](https://doc.akka.io/docs/akka/current/typed/index.html). The class [TypedMessages](akkaserver/src/main/scala/com/lightbend/modelserving/akka/TypedMessages.scala) contains definitions
+of the messages used for Actors and Actor's types. We are using here two actors:
+* [ModelServer](akkaserver/src/main/scala/com/lightbend/modelserving/akka/ModelServerBehavior.scala) which implements the actual model serving (leveraging classes in the Model project) and manages the state - the model.
+* [ModelServerManager](akkaserver/src/main/scala/com/lightbend/modelserving/akka/ModelServerManagerBehavior.scala) which manages ModelServer classes (creating an instance of an Actor for every data type) and providing a single entry point for models and data processing.
+
+Additionally we implement [Queryable State Pattern](https://kafka.apache.org/10/documentation/streams/developer-guide/interactive-queries.html). The implementation allows to get model serving statistics stored in the Actors, and uses [QueriesAkkaHTTPResource](akkaserver/src/main/scala/com/lightbend/modelserving/akka/QueriesAkkaHttpResource.scala) class.
+Finally Akka Streams implementation [AkkaModelServer](akkaserver/src/main/scala/com/lightbend/modelserving/akka/AkkaModelServer.scala) bringing all pieces together. Running this class will
+produce [ServingResult](model/src/main/scala/com/lightbend/modelserving/model/ModelToServe.scala). Here execution time is a time from message submission to the point when a result can be used. So it includes message submission and Kafka time in addition to the actual model serving.
+
+### Flink implementation
+
+This implementation shows how to use Flink's [low level joins](https://ci.apache.org/projects/flink/flink-docs-stable/dev/stream/operators/process_function.html) for implementing model serving leveraging dynamically controlled stream pattern.
+There are 2 implementations there:
+* [Key based implementation](flinkserver/src/main/scala/com/lightbend/modelserving/flink/keyed/DataProcessorKeyed.scala) based on [Processor Function](https://ci.apache.org/projects/flink/flink-docs-release-1.7/dev/stream/operators/process_function.html#low-level-joins)
+* [Partition based implementation](flinkserver/src/main/scala/com/lightbend/modelserving/flink/partitioned/DataProcessorMap.scala) based on [RichCoFlatMapFunction](https://www.da-platform.com/blog/bettercloud-dynamic-alerting-apache-flink)
+Both implementations work and a choice depends on load and distribution of the data types. See [this](https://cwiki.apache.org/confluence/display/FLINK/FLIP-23+-+Model+Serving) for more details.
+
+Execution of examples is done using [ModelServingKeyedJob](flinkserver/src/main/scala/com/lightbend/modelserving/flink/wine/server/ModelServingKeyedJob.scala) for keyed version and [ModelServingFlatJob](flinkserver/src/main/scala/com/lightbend/modelserving/flink/wine/server/ModelServingFlatJob.scala) for partitioned version
+
+### Spark Structured Streaming implementation
+
+This implementation shows how to use Spark Structured Streaming for implementing model serving leveraging dynamically controlled stream pattern. 
+
+The first implementation [SparkStructuredModelServer](sparkserver/src/main/scala/com/lightbend/modelserving/spark/server/SparkStructuredModelServer.scala) is leveraging recommended by Spark streaming approach - streams [union](https://spark.apache.org/docs/latest/streaming-programming-guide.html) and [mapGroupsWithState](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#arbitrary-stateful-operations).
+This implementation works, but requires usage of Spark mini batching, which is sub optimal for model serving implementations.
+
+A diffirent implementation - [SparkStructuredStateModelServer](sparkserver/src/main/scala/com/lightbend/modelserving/spark/server/SparkStructuredStateModelServer.scala) (suggested by [Gerard Maas](https://www.linkedin.com/in/gerardmaas/?originalSubdomain=be)) avoids this drawback by
+explicitely splitting streams and using model stream processing (based on [Spark Streaming](https://spark.apache.org/docs/latest/streaming-programming-guide.html)) as an external loop and data processing 
+(based on [Spark Structured Streaming](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html)) as an inner loop.
+This approach allows to significantly simplify implementation and use Spark's [Low Latency Continious Processing](https://databricks.com/blog/2018/03/20/low-latency-continuous-processing-mode-in-structured-streaming-in-apache-spark-2-3-0.html), which allows for real time model serving.
