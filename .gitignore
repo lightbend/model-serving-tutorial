@@ -1,0 +1,42 @@
+*.class
+*.log
+*.DS_Store*
+# sbt specific
+.cache/
+.history/
+.lib/
+.cpt/
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+.worksheet
+.idea
+.idea_modules
+/tmp
+spark-cassandra-timeseries/tmp/
+test-output
+
+diagrams/*.graffle
+*.suml*
+deploy.conf
+checkpoints/
+release/staging
+
+# These files are generated from corresponding template files:
+killrweather-app/src/main/resources/killrweatherAppDocker.json
+killrweather-app_structured/src/main/resources/killrweatherApp_structuredDocker.json
+killrweather-grpclient/src/main/resources/killrweatherGRPCClient.json
+killrweather-httpclient/src/main/resources/killrweatherHTTPClient.json
+killrweather-loader/src/main/resources/killrweatherloader.json
+killrweather-loader/src/main/resources/killrweatherloaderDocker.json
+killrweather-modellistener/src/main/resources/killrweatheModelListenerDocker.json
+
+killrweather.yaml
+loaderinstall.yaml
+*.swp
