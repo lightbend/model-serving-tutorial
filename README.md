@@ -64,120 +64,9 @@ If you don't have a GitHub account, just download the latest [release](https://g
 4. Use the default settings for `sbt`. Use JDK 1.8 if it's not shown as the default.
 5. Profit!!
 
+## Supporting projects
 
-## Using Tensorflow serving
-
-The easiest way to use Tensorflow serving is [using Tensorflow Docker image](https://medium.com/tensorflow/serving-ml-quickly-with-tensorflow-serving-and-docker-7df7094aa008).
-To do this first pull tensorflow image:
-````
-docker pull tensorflow/serving
-````
-Once you have it locally, you can start the image using the following command:
-````
-docker run -p 8501:8501 --name tfserving_wine --mount type=bind,source=/Users/boris/Projects/model-serving-tutorial/data/saved,target=/models/wine -e MODEL_NAME=wine -t tensorflow/serving
-````
-Here `8501` is the port used by the image to serve REST request which is mapped to local port `8501`
-
-`--name tfserving_wine` : Creates container name that can be used to refer to the running container by name.
- 
-`--mount type=bind,source=/Users/boris/Projects/model-serving-tutorial/data/saved,target=/models/wine` mounts local location of the model's directory `/Users/boris/Projects/model-serving-tutorial/data/saved` to container's directory
-
-`-e MODEL_NAME=wine` specifies model's name
-
-`-t tensorflow/serving` specifies image to use, `tensorflow/serving:latest` in our case
-
-Once the image is up and running, you can execute available [REST APIs](https://www.tensorflow.org/serving/api_rest), for example:
-````
-// 20190114193241
-// http://localhost:8501/v1/models/wine/versions/1
-
-{
-  "model_version_status": Array[1][
-    {
-      "version": "1",
-      "state": "AVAILABLE",
-      "status": {
-        "error_code": "OK",
-        "error_message": ""
-      }
-    }
-  ]
-}
-````   
-and
-````
-// 20190114193345
-// http://localhost:8501/v1/models/wine/versions/1/metadata
-
-{
-  "model_spec": {
-    "name": "wine",
-    "signature_name": "",
-    "version": "1"
-  },
-  "metadata": {
-    "signature_def": {
-      "signature_def": {
-        "predict": {
-          "inputs": {
-            "inputs": {
-              "dtype": "DT_FLOAT",
-              "tensor_shape": {
-                "dim": Array[2][
-                  {
-                    "size": "-1",
-                    "name": ""
-                  },
-                  {
-                    "size": "11",
-                    "name": ""
-                  }
-                ],
-                "unknown_rank": false
-              },
-              "name": "dense_1_input:0"
-            }
-          },
-          "outputs": {
-            "outputs": {
-              "dtype": "DT_FLOAT",
-              "tensor_shape": {
-                "dim": Array[2][
-                  {
-                    "size": "-1",
-                    "name": ""
-                  },
-                  {
-                    "size": "9",
-                    "name": ""
-                  }
-                ],
-                "unknown_rank": false
-              },
-              "name": "dense_3/Sigmoid:0"
-            }
-          },
-          "method_name": "tensorflow/serving/predict"
-        }
-      }
-    }
-  }
-}
-````
-Rest APIs also allow to serve model:
-````
-curl -X POST http://localhost:8501/v1/models/wine/versions/1:predict -d '{"signature_name":"predict","instances":[{"inputs":[{"dense_1_input":[7.4, 0.7, 0.0, 1.9, 0.076, 11.0, 34.0, 0.9978, 3.51, 0.56, 9.4, 5.0]}]}]}'
-
-````
-
-
-## Using Dynamically controlled Streams for model serving
-
-Such implementation basically requires a stateful stream processing for the main data stream with the state being updatable by a second stream - state update stream. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
-![Image](images/Dynamically%20controlled%20streams.png).
-In this tutorial we will demostrate how to implement this approach leveraging the popular streaming framework - [Akka Streams](https://doc.akka.io/docs/akka/2.5/stream/) and Streaming servers -
-[Spark structured Streaming](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html) and [Flink](https://flink.apache.org/). But before delving into implementations lets 
-discuss 4 support projects:
+The implementation contains 4 supporting projects, described below and data directory with all the data and models used
 
 ### Protobufs
 
@@ -206,6 +95,60 @@ To make sure that the same Kafka brokers and topics are used across all implemen
 This project incorporates the basic model and data operations. The omplementation is split into two main parts -
 generic, implementation that does not depend on data and Wine model, specific for the wine model.
 
+## Using external services for model serving
+Here we will show how to use Tensorflow serving. Alternatively one can use [Seldon-core](https://github.com/SeldonIO/seldon-core), [NVIDIA Tensor RT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html), etc.
+
+### Using Tensorflow serving
+
+The easiest way to use Tensorflow serving is [using Tensorflow Docker image](https://medium.com/tensorflow/serving-ml-quickly-with-tensorflow-serving-and-docker-7df7094aa008).
+To do this first pull tensorflow image:
+````
+docker pull tensorflow/serving
+````
+Once you have it locally, you can start the image using the following command:
+````
+docker run -p 8501:8501 --name tfserving_wine --mount type=bind,source=/Users/boris/Projects/model-serving-tutorial/data/saved,target=/models/wine -e MODEL_NAME=wine -t tensorflow/serving
+````
+Here `8501` is the port used by the image to serve REST request which is mapped to local port `8501`
+
+`--name tfserving_wine` : Creates container name that can be used to refer to the running container by name.
+ 
+`--mount type=bind,source=/Users/boris/Projects/model-serving-tutorial/data/saved,target=/models/wine` mounts local location of the model's directory `/Users/boris/Projects/model-serving-tutorial/data/saved` to container's directory
+
+`-e MODEL_NAME=wine` specifies model's name
+
+`-t tensorflow/serving` specifies image to use, `tensorflow/serving:latest` in our case
+
+Once the image is up and running, you can execute available [REST APIs](https://www.tensorflow.org/serving/api_rest), to get information about deployed model, for example
+````
+http://localhost:8501/v1/models/wine/versions/1
+````   
+to get the status of the deployed model or 
+````
+http://localhost:8501/v1/models/wine/versions/1/metadata
+````
+to get metadata about deployed model.
+
+Rest APIs also allow to serve model:
+````
+curl -X POST http://localhost:8501/v1/models/wine/versions/1:predict -d '{"signature_name":"predict","instances":[{"inputs":[7.4,0.7,0.0,1.9,0.076,11.0,34.0,0.9978,3.51,0.56,9.4]}]}'
+````
+This returns result:
+````
+{
+    "predictions": [[1.14877e-09, 3.39649e-09, 1.19725e-08, 0.014344, 0.0618138, 0.689735, 0.304, 0.0153118, 0.000971983]]
+}
+````
+### Using Tensorflow serving programmatically
+
+This implementation is provided in [Tensorflow project](tensorflowserver) and shows how akka streams can leverage Tensorflow serving REST APIs in Akka Streams implementation.
+
+## Using Dynamically controlled Streams for model serving
+
+Such implementation basically requires a stateful stream processing for the main data stream with the state being updatable by a second stream - state update stream. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
+![Image](images/Dynamically%20controlled%20streams.png).
+In this tutorial we will demostrate how to implement this approach leveraging the popular streaming framework - [Akka Streams](https://doc.akka.io/docs/akka/2.5/stream/) and Streaming servers -
+[Spark structured Streaming](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html) and [Flink](https://flink.apache.org/). 
 ### Akka Streams implementation
 
 This implementation shows how to use Akka Stream (along with [Akka Actors](https://doc.akka.io/docs/akka/current/typed/guide/actors-motivation.html#why-modern-systems-need-a-new-programming-model) and [Akka HTTP](https://doc.akka.io/docs/akka-http/current/))

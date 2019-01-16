@@ -53,7 +53,8 @@ object Dependencies {
   val akkaHttp              = "com.typesafe.akka"       %% "akka-http"                          % akkaHttpVersion
   val akkaHttpJsonJackson   = "de.heikoseeberger"       %% "akka-http-jackson"                  % akkaHttpJsonVersion
   val akkatyped             = "com.typesafe.akka"       %% "akka-actor-typed"                   % akkaVersion
-
+  
+  val gson                  = "com.google.code.gson"    % "gson"                                % gsonVersion
 
   val modelsDependencies = Seq(PMMLEvaluator, PMMLExtensions, tensorflow, tensoeflowProto, slf4japi, slf4jsimple)
   val flinkDependencies = Seq(flinkScala, flinkStreaming, flinkKafka, flinkQueryableRuntime, flinkQueryableClient, joda, slf4japi, slf4jsimple)

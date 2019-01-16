@@ -41,7 +41,7 @@ class ModelServerBehaviour(context: ActorContext[ModelServerActor], dataType : S
         newState = Some(new ModelToServeStats(model.model))
         newModel = ModelToServe.toModel(model.model)
         model.reply ! Done
-      case record : ServeData => // Serve datat
+      case record : ServeData => // Serve data
         // See if we have update for the model
         newModel.foreach { model =>
           // close current model first

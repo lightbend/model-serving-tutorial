@@ -51,5 +51,10 @@ lazy val akkaserver = (project in file("./akkaserver"))
   .settings(libraryDependencies ++= Dependencies.akkaServerDependencies)
   .dependsOn(model, configuration)
 
+lazy val tensorflowserver = (project in file("./tensorflowserver"))
+  .settings(libraryDependencies ++= Dependencies.akkaServerDependencies)
+  .settings(libraryDependencies ++= Seq(Dependencies.gson))
+  .dependsOn(model, configuration)
+
 lazy val root = (project in file(".")).
-  aggregate(protobufs, client, model, configuration, flinkserver, sparkserver, akkaserver)
+  aggregate(protobufs, client, model, configuration, flinkserver, sparkserver, akkaserver, tensorflowserver)

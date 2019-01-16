@@ -16,27 +16,13 @@
  *
  */
 
-object Versions {
+package com.lightbend.modelserving.tensorflowserving
 
-  val tensorflowVersion     = "1.12.0"
-  val PMMLVersion           = "1.4.3"
+import akka.actor.typed.ActorRef
+import com.lightbend.model.winerecord.WineRecord
+import com.lightbend.modelserving.model.{ModelToServeStats, ServingResult}
 
-  val kafkaVersion          = "2.1.0"
-  val jodaVersion           = "2.10.1"
-  val curatorVersion        = "4.0.1"
-  val commonIOVersion       = "2.6"
-
-  val flinkVersion          = "1.7.1"
-
-  val sparkVersion          = "2.4.0"
-  val kryoVersion           = "2.24.0"
-
-  val reactiveKafkaVersion  = "0.22"
-  val akkaVersion           = "2.5.19"
-  val akkaHttpVersion       = "10.1.7"
-  val akkaHttpJsonVersion   = "1.22.0"
-
-  val gsonVersion           = "2.8.5"
-
-  val slf4jVersion          = "1.7.25"
-}
+// Controller
+trait TFModelServerActor
+case class ServeData(reply: ActorRef[Option[ServingResult]], record : WineRecord) extends TFModelServerActor
+case class GetState(reply: ActorRef[ModelToServeStats]) extends TFModelServerActor

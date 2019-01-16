@@ -29,6 +29,10 @@ object DataRecord {
   def fromByteArray(message: Array[Byte]): Try[DataToServe] = Try {
     DataRecord(WineRecord.parseFrom(message))
   }
+
+  def wineFromByteArray(message: Array[Byte]): Try[WineRecord] = Try {
+    WineRecord.parseFrom(message)
+  }
 }
 
 case class DataRecord(record : WineRecord) extends DataToServe{
