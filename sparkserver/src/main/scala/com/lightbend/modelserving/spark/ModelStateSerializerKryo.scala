@@ -25,6 +25,7 @@ package com.lightbend.modelserving.spark
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 import com.lightbend.model.modeldescriptor.ModelDescriptor
+import com.lightbend.modelserving.model.ModelFactoryResolver
 import org.apache.spark.serializer.KryoRegistrator
 import com.lightbend.modelserving.winemodel.pmml.WinePMMLModel
 import com.lightbend.modelserving.winemodel.tensorflow.WineTensorFlowModel
@@ -59,7 +60,8 @@ class ModelStateSerializerKryo extends Serializer[ModelState]{
     val mlen = input.readLong().asInstanceOf[Int]
     val bytes = new Array[Byte](mlen)
     input.read(bytes)
-    factories.get(mType) match {
+    validateResolver()
+    resolver.getFactory(mType) match {
       case Some(factory) => {
         val state = ModelState(name, factory.restore(bytes))
         println(s"KRYO deserialization in ${System.currentTimeMillis() - start} ms")
@@ -92,8 +94,14 @@ class ModelStateSerializerKryo extends Serializer[ModelState]{
 }
 
 object ModelStateSerializerKryo{
-  private val factories = Map(ModelDescriptor.ModelType.PMML.value -> WinePMMLModel,
-    ModelDescriptor.ModelType.TENSORFLOW.value -> WineTensorFlowModel)
+
+  // Model Factory resolver
+  private var resolver : ModelFactoryResolver = _
+
+  // This method has to be invoked before execution starts
+  def setResolver(res : ModelFactoryResolver) : Unit = resolver = res
+  // Ensure that resolver is set
+  private def validateResolver() : Unit = if(resolver == null) throw new Exception("Model factory resolver is not set")
 }
 
 class ModelStateRegistrator extends KryoRegistrator {

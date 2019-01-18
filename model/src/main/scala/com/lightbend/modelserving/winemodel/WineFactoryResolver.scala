@@ -21,13 +21,14 @@ package com.lightbend.modelserving.winemodel
 import com.lightbend.model.modeldescriptor.ModelDescriptor
 import com.lightbend.modelserving.model.{ModelFactory, ModelFactoryResolver}
 import com.lightbend.modelserving.winemodel.pmml.WinePMMLModel
-import com.lightbend.modelserving.winemodel.tensorflow.WineTensorFlowModel
+import com.lightbend.modelserving.winemodel.tensorflow.{WineTensorFlowBundledModel, WineTensorFlowModel}
 
 // Model factory resolver - requires specific factories
 object WineFactoryResolver extends ModelFactoryResolver{
 
   private val factories = Map(ModelDescriptor.ModelType.PMML.value -> WinePMMLModel,
-                              ModelDescriptor.ModelType.TENSORFLOW.value -> WineTensorFlowModel)
+                              ModelDescriptor.ModelType.TENSORFLOW.value -> WineTensorFlowModel,
+                              ModelDescriptor.ModelType.TENSORFLOWSAVED.value -> WineTensorFlowBundledModel)
 
   override def getFactory(`type`: Int): Option[ModelFactory] = factories.get(`type`)
 }

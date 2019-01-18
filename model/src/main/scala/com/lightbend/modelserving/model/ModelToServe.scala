@@ -42,7 +42,7 @@ object ModelToServe {
     val m = ModelDescriptor.parseFrom(message)
     m.messageContent.isData match {
       case true => new ModelToServe(m.name, m.description, m.modeltype.value, m.getData.toByteArray, null, m.dataType)
-      case _ => new ModelToServe(m.name, m.description, m.modeltype.value, null, m.getLocation, m.dataType)
+      case _ => new ModelToServe(m.name, m.description, m.modeltype.value, Array[Byte](), m.getLocation, m.dataType)
     }
   }
 

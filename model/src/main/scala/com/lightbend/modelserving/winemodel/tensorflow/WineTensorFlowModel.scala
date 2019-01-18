@@ -27,11 +27,28 @@ import org.tensorflow.Tensor
 // Tensorflow model implementation for wine data
 class WineTensorFlowModel(inputStream : Array[Byte]) extends TensorFlowModel(inputStream) {
 
+  import WineTensorFlowModel._
+
   override def score(input: AnyVal): AnyVal = {
 
-    // Convert input data
-    val record = input.asInstanceOf[WineRecord]
     // Create input tensor
+    val modelInput = toTensor(input.asInstanceOf[WineRecord])
+    // Serve model using tensorflow APIs
+    val result = session.runner.feed("dense_1_input", modelInput).fetch("dense_3/Sigmoid").run().get(0)
+    // Get result shape
+    val rshape = result.shape
+    // Map output tensor to shape
+    var rMatrix = Array.ofDim[Float](rshape(0).asInstanceOf[Int], rshape(1).asInstanceOf[Int])
+    result.copyTo(rMatrix)
+    // Get result
+    rMatrix(0).indices.maxBy(rMatrix(0)).asInstanceOf[Double]
+  }
+}
+
+// Factory for wine data PMML model
+object WineTensorFlowModel extends  ModelFactory {
+
+  def toTensor(record: WineRecord) : Tensor[_] = {
     val data = Array(
       record.fixedAcidity.toFloat,
       record.volatileAcidity.toFloat,
@@ -45,27 +62,8 @@ class WineTensorFlowModel(inputStream : Array[Byte]) extends TensorFlowModel(inp
       record.sulphates.toFloat,
       record.alcohol.toFloat
     )
-    val modelInput = Tensor.create(Array(data))
-    // Serve model using tensorflow APIs
-    val result = session.runner.feed("dense_1_input", modelInput).fetch("dense_3/Sigmoid").run().get(0)
-    // Get result shape
-    val rshape = result.shape
-    // Map output tensor to shape
-    var rMatrix = Array.ofDim[Float](rshape(0).asInstanceOf[Int], rshape(1).asInstanceOf[Int])
-    result.copyTo(rMatrix)
-    // Get result
-    var value = (0, rMatrix(0)(0))
-    1 to (rshape(1).asInstanceOf[Int] - 1) foreach { i => {
-        if (rMatrix(0)(i) > value._2)
-          value = (i, rMatrix(0)(i))
-      }
-    }
-    value._1.toDouble
+    Tensor.create(Array(data))
   }
-}
-
-// Factory for wine data PMML model
-object WineTensorFlowModel extends  ModelFactory {
 
   override def create(input: ModelToServe): Option[Model] = {
     try {

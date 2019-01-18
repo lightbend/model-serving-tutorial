@@ -18,13 +18,13 @@
 
 package com.lightbend.modelserving.model.tensorflow
 
-import java.io.File
+import java.io.{File, ObjectInputStream, ObjectOutputStream}
 import java.nio.file.Files
 
 import com.google.protobuf.Descriptors
 import com.lightbend.model.modeldescriptor.ModelDescriptor
 import com.lightbend.modelserving.model.Model
-import org.tensorflow.{SavedModelBundle}
+import org.tensorflow.{Graph, SavedModelBundle, Session}
 
 import scala.collection.mutable.{Map => MMap}
 import org.tensorflow.framework.{MetaGraphDef, SavedModel, SignatureDef, TensorInfo, TensorShapeProto}
@@ -37,23 +37,32 @@ import scala.collection.JavaConverters._
 // This is a very simple implementation, assuming that the Tensorflow saved model bundle is local (constructor, get tags)
 // The realistic implementation has to use some shared data storage, for example, S3, Minio, etc.
 
-abstract class TensorFlowBundleModel(inputStream : Array[Byte]) extends Model {
+abstract class TensorFlowBundleModel(inputStream : Array[Byte]) extends Model  with Serializable {
 
-  // Convert input into file path
-  val path = new String(inputStream)
-  // get tags. We assume here that the first tag is the one we use
-  val tags = getTags(path)
-  // get saved model bundle
-  val bundle = SavedModelBundle.load(path, tags(0))
-  // get grapth
-  val graph = bundle.graph
-  // get metatagraph and signature
-  val metaGraphDef = MetaGraphDef.parseFrom(bundle.metaGraphDef)
-  val signatureMap = metaGraphDef.getSignatureDefMap.asScala
-  //  parse signature, so that we can use definitions (if necessary) programmatically in score method
-  val parsedSign = parseSignatures(signatureMap)
-  // Create tensorflow session
-  val session = bundle.session
+  var bytes = inputStream
+  setup()
+  var tags : Seq[String] = _
+  var graph : Graph = _
+  var signatures : Map[String, Signature] = _
+  var session : Session = _
+
+  private def setup() : Unit = {
+    // Convert input into file path
+    val path = new String(bytes)
+    // get tags. We assume here that the first tag is the one we use
+    tags = getTags(path)
+    // get saved model bundle
+    val bundle = SavedModelBundle.load(path, tags(0))
+    // get grapth
+    graph = bundle.graph
+    // get metatagraph and signature
+    val metaGraphDef = MetaGraphDef.parseFrom(bundle.metaGraphDef)
+    val signatureMap = metaGraphDef.getSignatureDefMap.asScala
+    //  parse signature, so that we can use definitions (if necessary) programmatically in score method
+    signatures = parseSignatures(signatureMap)
+    // Create tensorflow session
+    session = bundle.session
+  }
 
   // Cleanup
   override def cleanup(): Unit = {
@@ -70,7 +79,7 @@ abstract class TensorFlowBundleModel(inputStream : Array[Byte]) extends Model {
   }
 
   // Convert tensorflow model to bytes
-  override def toBytes(): Array[Byte] = inputStream
+  override def toBytes(): Array[Byte] = bytes
 
   // Get model type
   override def getType: Long = ModelDescriptor.ModelType.TENSORFLOWSAVED.value
@@ -82,6 +91,28 @@ abstract class TensorFlowBundleModel(inputStream : Array[Byte]) extends Model {
       case _ => false
     }
   }
+
+  private def writeObject(output: ObjectOutputStream): Unit = {
+    val start = System.currentTimeMillis()
+    output.writeObject(bytes)
+    println(s"Tensorflow java serialization in ${System.currentTimeMillis() - start} ms")
+  }
+
+  private def readObject(input: ObjectInputStream): Unit = {
+    val start = System.currentTimeMillis()
+    bytes = input.readObject().asInstanceOf[Array[Byte]]
+    try{
+      setup()
+      println(s"Tensorflow java deserialization in ${System.currentTimeMillis() - start} ms")
+    }
+    catch {
+      case t: Throwable =>
+        t.printStackTrace
+        println(s"Tensorflow java deserialization failed in ${System.currentTimeMillis() - start} ms")
+        println(s"Restored Tensorflow ${new String(bytes)}")
+    }
+  }
+
 
   // Parse signature
   private def parseSignatures(signatures : MMap[String, SignatureDef]) : Map[String, Signature] = {

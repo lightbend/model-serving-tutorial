@@ -41,10 +41,11 @@ object DataProvider {
   import ModelServingConfiguration._
 
   val file = "data/winequality_red.csv"
-  var dataTimeInterval = 1000 * 1 // 1 sec
   val directory = "data/"
   val tensorfile = "data/optimized_WineQuality.pb"
+  val tensorfilebundle = "data/saved/1/"
   var modelTimeInterval = 1000 * 60 * 1 // 1 mins
+  var dataTimeInterval = 1000 * 1 // 1 sec
 
   def main(args: Array[String]) {
 
@@ -92,6 +93,16 @@ object DataProvider {
     val files = getListOfModelFiles(directory)
     val bos = new ByteArrayOutputStream()
     while (true) {
+      // TF model bundled
+      val tbRecord = ModelDescriptor(name = "tensorflow saved model",
+        description = "generated from TensorFlow saved bundle", modeltype =
+          ModelDescriptor.ModelType.TENSORFLOWSAVED, dataType = "wine").
+        withLocation(tensorfilebundle)
+      bos.reset()
+      tbRecord.writeTo(bos)
+      sender.writeValue(MODELS_TOPIC, bos.toByteArray)
+      println(s"Published Model ${tbRecord.description}")
+      pause(modelTimeInterval)
       files.foreach(f => {
         // PMML
         val pByteArray = Files.readAllBytes(Paths.get(directory + f))

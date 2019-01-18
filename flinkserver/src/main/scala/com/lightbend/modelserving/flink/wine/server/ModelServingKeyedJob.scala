@@ -119,7 +119,7 @@ object ModelServingKeyedJob {
     dataKafkaProps.setProperty("bootstrap.servers", KAFKA_BROKER)
     dataKafkaProps.setProperty("group.id", DATA_GROUP)
     // always read the Kafka topic from the current location
-    dataKafkaProps.setProperty("auto.offset.reset", "latest")
+    dataKafkaProps.setProperty("auto.offset.reset", "earliest")
 
     // Model
     val modelKafkaProps = new Properties

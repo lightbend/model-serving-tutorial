@@ -24,9 +24,8 @@ package com.lightbend.modelserving.spark.server
 
 import com.lightbend.modelserving.configuration.ModelServingConfiguration
 import com.lightbend.modelserving.model.{ModelToServe, ServingResult}
-import com.lightbend.modelserving.spark.ModelState
+import com.lightbend.modelserving.spark.{DataWithModel, ModelState, ModelStateSerializerKryo}
 import com.lightbend.modelserving.winemodel.WineFactoryResolver
-import com.lightbend.modelserving.spark.DataWithModel
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.{GroupState, GroupStateTimeout, Trigger}
@@ -59,6 +58,7 @@ object SparkStructuredModelServer {
 
     // Set modelToServe
     ModelToServe.setResolver(WineFactoryResolver)
+    ModelStateSerializerKryo.setResolver(WineFactoryResolver)
 
     // Message parsing
     // In order to be able to uninon both streams we are using here combined format
