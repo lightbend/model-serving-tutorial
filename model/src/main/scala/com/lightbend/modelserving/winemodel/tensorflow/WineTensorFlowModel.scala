@@ -41,7 +41,7 @@ class WineTensorFlowModel(inputStream : Array[Byte]) extends TensorFlowModel(inp
     var rMatrix = Array.ofDim[Float](rshape(0).asInstanceOf[Int], rshape(1).asInstanceOf[Int])
     result.copyTo(rMatrix)
     // Get result
-    rMatrix(0).indices.maxBy(rMatrix(0)).asInstanceOf[Double]
+    rMatrix(0).indices.maxBy(rMatrix(0)).toDouble
   }
 }
 
