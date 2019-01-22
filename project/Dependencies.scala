@@ -29,8 +29,6 @@ object Dependencies {
   val tensoeflowProto       = "org.tensorflow"          % "proto"                               % tensorflowVersion
   val PMMLEvaluator         = "org.jpmml"               % "pmml-evaluator"                      % PMMLVersion
   val PMMLExtensions        = "org.jpmml"               % "pmml-evaluator-extension"            % PMMLVersion
-  val slf4japi              = "org.slf4j"               % "slf4j-api"                           % slf4jVersion
-  val slf4jsimple           = "org.slf4j"               % "slf4j-simple"                        % slf4jVersion
 
   val flinkScala            = "org.apache.flink"        % "flink-scala_2.11"                    % flinkVersion
   val flinkStreaming        = "org.apache.flink"        % "flink-streaming-scala_2.11"          % flinkVersion
@@ -56,8 +54,8 @@ object Dependencies {
   
   val gson                  = "com.google.code.gson"    % "gson"                                % gsonVersion
 
-  val modelsDependencies = Seq(PMMLEvaluator, PMMLExtensions, tensorflow, tensoeflowProto, slf4japi, slf4jsimple)
-  val flinkDependencies = Seq(flinkScala, flinkStreaming, flinkKafka, flinkQueryableRuntime, flinkQueryableClient, joda, slf4japi, slf4jsimple)
+  val modelsDependencies = Seq(PMMLEvaluator, PMMLExtensions, tensorflow, tensoeflowProto)
+  val flinkDependencies = Seq(flinkScala, flinkStreaming, flinkKafka, flinkQueryableRuntime, flinkQueryableClient, joda)
   val sparkDependencies = Seq(sparkcore, sparkstreaming, sparkkafka, sparkSQL, sparkSQLkafka)
   val akkaServerDependencies = Seq(reactiveKafka, akkaStreamTyped, akkatyped, akkaHttp, akkaHttpJsonJackson, reactiveKafka)
 
