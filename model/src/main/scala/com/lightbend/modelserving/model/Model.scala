@@ -19,7 +19,7 @@
 package com.lightbend.modelserving.model
 
 // Generic definition of the model
-abstract class Model {
+trait Model {
   def score(input : AnyVal) : AnyVal
   def cleanup() : Unit
   def toBytes() : Array[Byte]
