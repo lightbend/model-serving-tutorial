@@ -24,5 +24,5 @@ import com.lightbend.modelserving.model.{ModelToServeStats, ServingResult}
 
 // Controller
 trait TFModelServerActor
-case class ServeData(reply: ActorRef[Option[ServingResult]], record : WineRecord) extends TFModelServerActor
+case class ServeData(reply: ActorRef[Option[ServingResult[Double]]], record : WineRecord) extends TFModelServerActor
 case class GetState(reply: ActorRef[ModelToServeStats]) extends TFModelServerActor

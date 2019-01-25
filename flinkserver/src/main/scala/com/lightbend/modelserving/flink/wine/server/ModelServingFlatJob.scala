@@ -20,6 +20,7 @@ package com.lightbend.modelserving.flink.wine.server
 
 import java.util.Properties
 
+import com.lightbend.model.winerecord.WineRecord
 import com.lightbend.modelserving.model.DataToServe
 import com.lightbend.modelserving.flink.wine.BadDataHandler
 import com.lightbend.modelserving.configuration.ModelServingConfiguration
@@ -141,12 +142,12 @@ object ModelServingFlatJob {
       .broadcast
     // Read data from streams
     val data = dataStream.map(DataRecord.fromByteArray(_))
-      .flatMap(BadDataHandler[DataToServe])
+      .flatMap(BadDataHandler[DataToServe[WineRecord]])
 
     // Merge streams
     data
       .connect(models)
-      .flatMap(DataProcessorMap())
+      .flatMap(DataProcessorMap[WineRecord, Double]())
       .map(result => println(s"Model serving in ${System.currentTimeMillis() - result.duration} ms, with result ${result.result} (model ${result.name}, data type ${result.dataType})"))
   }
 }

@@ -62,4 +62,4 @@ object DataWithModel{
 }
 
 // Model state used for storing existing models
-case class ModelState(name : String, model : Model)
+case class ModelState(name : String, model : Model[WineRecord, Double])

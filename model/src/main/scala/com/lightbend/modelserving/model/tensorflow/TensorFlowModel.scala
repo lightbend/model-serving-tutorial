@@ -26,7 +26,7 @@ import org.tensorflow.{Graph, Session}
 
 // Abstract class for any Tensorflow (optimized export) model processing. It has to be extended by the user
 // implement score method, based on his own model. Serializability here is required for Spark
-abstract class TensorFlowModel(inputStream : Array[Byte]) extends Model with Serializable {
+abstract class TensorFlowModel[RECORD,RESULT](inputStream : Array[Byte]) extends Model[RECORD,RESULT] with Serializable {
 
   // Make sure data is not empty
   if(inputStream.length < 1) throw new Exception("Empty graph data")
@@ -59,7 +59,7 @@ abstract class TensorFlowModel(inputStream : Array[Byte]) extends Model with Ser
 
   override def equals(obj: Any): Boolean = {
     obj match {
-      case tfModel: TensorFlowModel =>
+      case tfModel: TensorFlowModel[RECORD,RESULT] =>
         tfModel.toBytes.toList == inputStream.toList
       case _ => false
     }

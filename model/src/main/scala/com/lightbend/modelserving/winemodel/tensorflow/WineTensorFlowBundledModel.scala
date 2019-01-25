@@ -26,7 +26,7 @@ import com.lightbend.modelserving.model.ModelToServe
 /**
   * Implementation of TensorFlow bundled model for Wine.
   */
-class WineTensorFlowBundledModel(inputStream: Array[Byte]) extends TensorFlowBundleModel(inputStream) {
+class WineTensorFlowBundledModel(inputStream: Array[Byte]) extends TensorFlowBundleModel[WineRecord, Double](inputStream) {
 
   /**
     * Score data.
@@ -34,9 +34,9 @@ class WineTensorFlowBundledModel(inputStream: Array[Byte]) extends TensorFlowBun
     * @param input object to score.
     * @return scoring result
     */
-  override def score(input: AnyVal): AnyVal = {
+  override def score(input: WineRecord): Double = {
     // Create input tensor
-    val modelInput = WineTensorFlowModel.toTensor(input.asInstanceOf[WineRecord])
+    val modelInput = WineTensorFlowModel.toTensor(input)
     // Serve model using tensorflow APIs
     val signature = signatures.head._2
     val tinput = signature.inputs.head._2
@@ -53,7 +53,7 @@ class WineTensorFlowBundledModel(inputStream: Array[Byte]) extends TensorFlowBun
 /**
   * Implementation of TensorFlow bundled model factory.
   */
-object WineTensorFlowBundledModel extends ModelFactory {
+object WineTensorFlowBundledModel extends ModelFactory[WineRecord, Double] {
 
   /**
     * Creates a new TensorFlow bundled model.
@@ -61,7 +61,7 @@ object WineTensorFlowBundledModel extends ModelFactory {
     * @param descriptor model to serve representation of PMML model.
     * @return model
     */
-  override def create(input: ModelToServe): Option[Model] =
+  override def create(input: ModelToServe): Option[Model[WineRecord, Double]] =
     try
       Some(new WineTensorFlowBundledModel(input.location.getBytes))
     catch {
@@ -74,6 +74,6 @@ object WineTensorFlowBundledModel extends ModelFactory {
     * @param bytes binary representation of PMML model.
     * @return model
     */
-  override def restore(bytes: Array[Byte]) = new WineTensorFlowBundledModel(bytes)
+  override def restore(bytes: Array[Byte]) : Model[WineRecord, Double] = new WineTensorFlowBundledModel(bytes)
 }
 

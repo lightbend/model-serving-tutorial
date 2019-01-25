@@ -29,10 +29,10 @@ import com.lightbend.model.modeldescriptor.ModelDescriptor
 object ModelToServe {
 
   // Model Factory resolver
-  private var resolver : ModelFactoryResolver = _
+  private var resolver : ModelFactoryResolver[_, _] = _
 
   // This method has to be invoked before execution starts
-  def setResolver(res : ModelFactoryResolver) : Unit = resolver = res
+  def setResolver[RECORD, RESULT](res : ModelFactoryResolver[RECORD, RESULT]) : Unit = resolver = res
 
   // Convert to String
   override def toString: String = super.toString
@@ -47,7 +47,7 @@ object ModelToServe {
   }
 
   // Write model to data stream
-  def writeModel(model: Model, output: DataOutputStream): Unit = {
+  def writeModel[RECORD,RESULT](model: Model[RECORD,RESULT], output: DataOutputStream): Unit = {
     try {
       if (model == null) {
         output.writeLong(0)
@@ -65,27 +65,30 @@ object ModelToServe {
   }
 
   // Deep copy the model
-  def copy(from: Option[Model]): Option[Model] = {
+  def copy[RECORD,RESULT](from: Option[Model[RECORD,RESULT]]): Option[Model[RECORD,RESULT]] = {
     validateResolver()
     from match {
       case Some(model) =>
         validateResolver()
-        Some(resolver.getFactory(model.getType.asInstanceOf[Int]).get.restore(model.toBytes()))
+        Some(resolver.getFactory(model.getType.asInstanceOf[Int]).get.restore(model.toBytes()).asInstanceOf[Model[RECORD,RESULT]])
       case _ => None
     }
   }
 
   // Restore model from byte array
-  def restore(t : Int, content : Array[Byte]): Option[Model] = {
+  def restore[RECORD,RESULT](t : Int, content : Array[Byte]): Option[Model[RECORD,RESULT]] = {
     validateResolver()
-    Some(resolver.getFactory(t).get.restore(content))
+    Some(resolver.getFactory(t).get.restore(content).asInstanceOf[Model[RECORD,RESULT]])
   }
 
   // Get the model from ModelToServe
-  def toModel(model: ModelToServe): Option[Model] = {
+  def toModel[RECORD,RESULT](model: ModelToServe): Option[Model[RECORD,RESULT]] = {
     validateResolver()
     resolver.getFactory(model.modelType) match {
-      case Some(factory) => factory.create(model)
+      case Some(factory) => factory.create(model) match {
+        case Some(model) => Some(model.asInstanceOf[Model[RECORD,RESULT]])
+        case _ => None
+      }
       case _ => None
     }
   }
@@ -117,4 +120,4 @@ case class ModelToServeStats(name: String = "", description: String = "",
 
 // Model serving result definition
 // Ideally result should be AnyVal, but due to the fact that Spark structured streaming does not support it, we are using Double here
-case class ServingResult(name : String, dataType : String = "", duration : Long = 0, result: Double = null.asInstanceOf[Double])
+case class ServingResult[RESULT](name : String, dataType : String = "", duration : Long = 0, result: RESULT = null.asInstanceOf[RESULT])

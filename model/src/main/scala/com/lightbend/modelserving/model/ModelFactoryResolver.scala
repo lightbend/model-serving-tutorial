@@ -25,6 +25,6 @@ package com.lightbend.modelserving.model
 //        PMML = 2;
 // Additional types can be defined as required
 
-trait ModelFactoryResolver {
-  def getFactory(`type` : Int) : Option[ModelFactory]
+trait ModelFactoryResolver[RECORD, RESULT] {
+  def getFactory(`type` : Int) : Option[ModelFactory[RECORD, RESULT]]
 }

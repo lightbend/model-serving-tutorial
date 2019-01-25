@@ -25,14 +25,14 @@ import com.lightbend.modelserving.model.ModelToServe
 import org.tensorflow.Tensor
 
 // Tensorflow model implementation for wine data
-class WineTensorFlowModel(inputStream : Array[Byte]) extends TensorFlowModel(inputStream) {
+class WineTensorFlowModel(inputStream : Array[Byte]) extends TensorFlowModel[WineRecord, Double](inputStream) {
 
   import WineTensorFlowModel._
 
-  override def score(input: AnyVal): AnyVal = {
+  override def score(input: WineRecord): Double = {
 
     // Create input tensor
-    val modelInput = toTensor(input.asInstanceOf[WineRecord])
+    val modelInput = toTensor(input)
     // Serve model using tensorflow APIs
     val result = session.runner.feed("dense_1_input", modelInput).fetch("dense_3/Sigmoid").run().get(0)
     // Get result shape
@@ -46,7 +46,7 @@ class WineTensorFlowModel(inputStream : Array[Byte]) extends TensorFlowModel(inp
 }
 
 // Factory for wine data PMML model
-object WineTensorFlowModel extends  ModelFactory {
+object WineTensorFlowModel extends  ModelFactory[WineRecord, Double] {
 
   def toTensor(record: WineRecord) : Tensor[_] = {
     val data = Array(
@@ -65,7 +65,7 @@ object WineTensorFlowModel extends  ModelFactory {
     Tensor.create(Array(data))
   }
 
-  override def create(input: ModelToServe): Option[Model] = {
+  override def create(input: ModelToServe): Option[Model[WineRecord, Double]] = {
     try {
       Some(new WineTensorFlowModel(input.model))
     }catch{
@@ -73,5 +73,5 @@ object WineTensorFlowModel extends  ModelFactory {
     }
   }
 
-  override def restore(bytes: Array[Byte]): Model = new WineTensorFlowModel(bytes)
+  override def restore(bytes: Array[Byte]): Model[WineRecord, Double] = new WineTensorFlowModel(bytes)
 }

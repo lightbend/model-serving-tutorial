@@ -37,7 +37,7 @@ import scala.collection.JavaConverters._
 // This is a very simple implementation, assuming that the Tensorflow saved model bundle is local (constructor, get tags)
 // The realistic implementation has to use some shared data storage, for example, S3, Minio, etc.
 
-abstract class TensorFlowBundleModel(inputStream : Array[Byte]) extends Model  with Serializable {
+abstract class TensorFlowBundleModel[RECORD,RESULT](inputStream : Array[Byte]) extends Model[RECORD,RESULT]  with Serializable {
 
   var bytes = inputStream
   setup()
@@ -86,7 +86,7 @@ abstract class TensorFlowBundleModel(inputStream : Array[Byte]) extends Model  w
 
   override def equals(obj: Any): Boolean = {
     obj match {
-      case tfModel: TensorFlowBundleModel =>
+      case tfModel: TensorFlowBundleModel[RECORD,RESULT] =>
         tfModel.toBytes.toList == inputStream.toList
       case _ => false
     }

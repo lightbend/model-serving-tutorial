@@ -19,7 +19,7 @@
 package com.lightbend.modelserving.model
 
 // Generic definition of the model factory
-trait ModelFactory {
-  def create(input : ModelToServe) : Option[Model]
-  def restore(bytes : Array[Byte]) : Model
+trait ModelFactory[RECORD,RESULT] {
+  def create(input : ModelToServe) : Option[Model[RECORD,RESULT]]
+  def restore(bytes : Array[Byte]) : Model[RECORD,RESULT]
 }

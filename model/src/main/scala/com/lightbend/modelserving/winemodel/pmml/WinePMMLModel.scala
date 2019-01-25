@@ -29,17 +29,15 @@ import scala.collection.JavaConversions._
 import scala.collection._
 
 // PMML model implementation for wine data
-class WinePMMLModel(inputStream: Array[Byte]) extends PMMLModel(inputStream) {
+class WinePMMLModel(inputStream: Array[Byte]) extends PMMLModel[WineRecord, Double](inputStream) {
 
   // Scoring (using PMML evaluator)
-  override def score(input: AnyVal): AnyVal = {
-    // Convert input
-    val inputs = input.asInstanceOf[WineRecord]
+  override def score(input: WineRecord): Double = {
     // Clear arguments (from previous run)
     arguments.clear()
     // Populate input based on record
     inputFields.foreach(field => {
-      arguments.put(field.getName, field.prepare(getValueByName(inputs, field.getName.getValue)))
+      arguments.put(field.getName, field.prepare(getValueByName(input, field.getName.getValue)))
     })
 
     // Calculate Output// Calculate Output
@@ -64,13 +62,13 @@ class WinePMMLModel(inputStream: Array[Byte]) extends PMMLModel(inputStream) {
 }
 
 // Factory for wine data PMML model
-object WinePMMLModel extends ModelFactory{
+object WinePMMLModel extends ModelFactory[WineRecord, Double]{
   private val names = Map("fixed acidity" -> 0,
     "volatile acidity" -> 1,"citric acid" ->2,"residual sugar" -> 3,
     "chlorides" -> 4,"free sulfur dioxide" -> 5,"total sulfur dioxide" -> 6,
     "density" -> 7,"pH" -> 8,"sulphates" ->9,"alcohol" -> 10)
 
-  override def create(input: ModelToServe): Option[Model] = {
+  override def create(input: ModelToServe): Option[Model[WineRecord, Double]] = {
     try {
       Some(new WinePMMLModel(input.model))
     }catch{
@@ -78,5 +76,5 @@ object WinePMMLModel extends ModelFactory{
     }
   }
 
-  override def restore(bytes: Array[Byte]): Model = new WinePMMLModel(bytes)
+  override def restore(bytes: Array[Byte]): Model[WineRecord, Double] = new WinePMMLModel(bytes)
 }

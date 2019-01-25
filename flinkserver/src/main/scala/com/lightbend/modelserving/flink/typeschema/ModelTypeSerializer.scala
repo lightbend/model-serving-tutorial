@@ -27,16 +27,16 @@ import org.apache.flink.core.memory.{DataInputView, DataOutputView}
 import org.apache.flink.util.InstantiationUtil
 
 // Type serializer for model
-class ModelTypeSerializer extends TypeSerializer[Option[Model]] {
+class ModelTypeSerializer[RECORD, RESULT] extends TypeSerializer[Option[Model[RECORD, RESULT]]] {
 
 
-  override def createInstance(): Option[Model] = None
+  override def createInstance(): Option[Model[RECORD, RESULT]] = None
 
-  override def canEqual(obj: scala.Any): Boolean = obj.isInstanceOf[ModelTypeSerializer]
+  override def canEqual(obj: scala.Any): Boolean = obj.isInstanceOf[ModelTypeSerializer[RECORD, RESULT]]
 
-  override def duplicate(): TypeSerializer[Option[Model]] = new ModelTypeSerializer
+  override def duplicate(): TypeSerializer[Option[Model[RECORD, RESULT]]] = new ModelTypeSerializer[RECORD, RESULT]
 
-  override def serialize(record: Option[Model], target: DataOutputView): Unit = {
+  override def serialize(record: Option[Model[RECORD, RESULT]], target: DataOutputView): Unit = {
     record match {
       case Some(model) =>
         target.writeBoolean(true)
@@ -52,14 +52,14 @@ class ModelTypeSerializer extends TypeSerializer[Option[Model]] {
 
   override def getLength: Int = -1
 
-  override def snapshotConfiguration(): TypeSerializerSnapshot[Option[Model]] = new ModelSerializerConfigSnapshot
+  override def snapshotConfiguration(): TypeSerializerSnapshot[Option[Model[RECORD, RESULT]]] = new ModelSerializerConfigSnapshot[RECORD, RESULT]
 
-  override def copy(from: Option[Model]): Option[Model] = {
+  override def copy(from: Option[Model[RECORD, RESULT]]): Option[Model[RECORD, RESULT]] = {
     if(from == null) null
     else ModelToServe.copy(from)
   }
 
-  override def copy(from: Option[Model], reuse: Option[Model]): Option[Model] = ModelToServe.copy(from)
+  override def copy(from: Option[Model[RECORD, RESULT]], reuse: Option[Model[RECORD, RESULT]]): Option[Model[RECORD, RESULT]] = ModelToServe.copy(from)
 
   override def copy(source: DataInputView, target: DataOutputView): Unit = {
     val exist = source.readBoolean()
@@ -76,7 +76,7 @@ class ModelTypeSerializer extends TypeSerializer[Option[Model]] {
     }
   }
 
-  override def deserialize(source: DataInputView): Option[Model] =
+  override def deserialize(source: DataInputView): Option[Model[RECORD, RESULT]] =
     source.readBoolean() match {
       case true =>
         val t = source.readLong().asInstanceOf[Int]
@@ -87,16 +87,16 @@ class ModelTypeSerializer extends TypeSerializer[Option[Model]] {
       case _ => Option.empty
     }
 
-  override def deserialize(reuse: Option[Model], source: DataInputView): Option[Model] = deserialize(source)
+  override def deserialize(reuse: Option[Model[RECORD, RESULT]], source: DataInputView): Option[Model[RECORD, RESULT]] = deserialize(source)
 
-  override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[ModelTypeSerializer]
+  override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[ModelTypeSerializer[RECORD, RESULT]]
 
   override def hashCode(): Int = 42
 }
 
 object ModelTypeSerializer{
 
-  def apply : ModelTypeSerializer = new ModelTypeSerializer()
+  def apply[RECORD, RESULT] : ModelTypeSerializer[RECORD, RESULT] = new ModelTypeSerializer[RECORD, RESULT]()
 }
 
 object ModelSerializerConfigSnapshot{
@@ -106,11 +106,11 @@ object ModelSerializerConfigSnapshot{
 
 // Snapshot configuration Model serializer
 // See https://github.com/apache/flink/blob/master/flink-core/src/main/java/org/apache/flink/api/common/typeutils/SimpleTypeSerializerSnapshot.java
-class ModelSerializerConfigSnapshot extends TypeSerializerSnapshot[Option[Model]]{
+class ModelSerializerConfigSnapshot[RECORD, RESULT] extends TypeSerializerSnapshot[Option[Model[RECORD, RESULT]]]{
 
   import ModelSerializerConfigSnapshot._
 
-  private var serializerClass = classOf[ModelTypeSerializer]
+  private var serializerClass = classOf[ModelTypeSerializer[RECORD, RESULT]]
 
   override def getCurrentVersion: Int = CURRENT_VERSION
 
@@ -127,9 +127,9 @@ class ModelSerializerConfigSnapshot extends TypeSerializerSnapshot[Option[Model]
     }
   }
 
-  override def restoreSerializer(): TypeSerializer[Option[Model]] = InstantiationUtil.instantiate(serializerClass)
+  override def restoreSerializer(): TypeSerializer[Option[Model[RECORD, RESULT]]] = InstantiationUtil.instantiate(serializerClass)
 
-  override def resolveSchemaCompatibility(newSerializer: TypeSerializer[Option[Model]]): TypeSerializerSchemaCompatibility[Option[Model]] =
+  override def resolveSchemaCompatibility(newSerializer: TypeSerializer[Option[Model[RECORD, RESULT]]]): TypeSerializerSchemaCompatibility[Option[Model[RECORD, RESULT]]] =
     if (newSerializer.getClass eq serializerClass) TypeSerializerSchemaCompatibility.compatibleAsIs()
     else TypeSerializerSchemaCompatibility.incompatible()
 
@@ -141,11 +141,9 @@ class ModelSerializerConfigSnapshot extends TypeSerializerSnapshot[Option[Model]
         throw new IOException("Failed to read SimpleTypeSerializerSnapshot: Serializer class not found: " + className, e)
     }
 
-  @SuppressWarnings(Array("unchecked"))
-  @throws[IOException]
-  private def cast[T](clazz: Class[_]) : Class[ModelTypeSerializer]   = {
-    if (!classOf[ModelTypeSerializer].isAssignableFrom(clazz)) throw new IOException("Failed to read SimpleTypeSerializerSnapshot. " + "Serializer class name leads to a class that is not a TypeSerializer: " + clazz.getName)
-    clazz.asInstanceOf[Class[ModelTypeSerializer]]
+  private def cast[T](clazz: Class[_]) : Class[ModelTypeSerializer[RECORD, RESULT]]   = {
+    if (!classOf[ModelTypeSerializer[RECORD, RESULT]].isAssignableFrom(clazz)) throw new IOException("Failed to read SimpleTypeSerializerSnapshot. " + "Serializer class name leads to a class that is not a TypeSerializer: " + clazz.getName)
+    clazz.asInstanceOf[Class[ModelTypeSerializer[RECORD, RESULT]]]
   }
 
 }

@@ -19,8 +19,8 @@
 package com.lightbend.modelserving.model
 
 // Generic definition of the model
-trait Model {
-  def score(input : AnyVal) : AnyVal
+trait Model [RECORD, RESULT]{
+  def score(input : RECORD) : RESULT
   def cleanup() : Unit
   def toBytes() : Array[Byte]
   def getType : Long

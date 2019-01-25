@@ -91,13 +91,13 @@ object SparkStructuredStateModelServer {
           case dtype if(dtype != "") =>
             currentModels.get (data.dataType) match {
               case Some (state) =>
-                val result = state.model.score (data.asInstanceOf[AnyVal] ).asInstanceOf[Double]
-                ServingResult (state.name, data.dataType, System.currentTimeMillis () - data.ts, result)
-              case _ => ServingResult ("No model available")
+                val result = state.model.score (data)
+                ServingResult[Double] (state.name, data.dataType, System.currentTimeMillis () - data.ts, result)
+              case _ => ServingResult[Double] ("No model available","",0,.0)
             }
-          case _ => ServingResult ("Bad input record")
+          case _ => ServingResult[Double] ("Bad input record", "",0,.0)
         }
-      }).as[ServingResult]
+      }).as[ServingResult[Double]]
 
     var dataQuery = datastream
       .writeStream.outputMode("update").format("console")
@@ -113,6 +113,11 @@ object SparkStructuredStateModelServer {
       if (!rdd.isEmpty()) {
         val models = rdd.map(_.value).collect
           .map(ModelToServe.fromByteArray(_)).filter(_.isSuccess).map(_.get)
+
+        // Stop currently running data stream
+        println("Stopping data query")
+        dataQuery.stop
+
         val newModels = models.map(modelToServe => {
           println (s"New model ${modelToServe}")
           // Update state with the new model
@@ -125,10 +130,6 @@ object SparkStructuredStateModelServer {
             case _ => (null, null)
           }
         }).toMap
-
-        // Stop currently running data stream
-        println("Stopping data query")
-        dataQuery.stop
 
         // Merge maps
         newModels.foreach{ case (name, value) => {

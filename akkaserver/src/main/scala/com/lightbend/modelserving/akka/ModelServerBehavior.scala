@@ -28,8 +28,8 @@ class ModelServerBehaviour(context: ActorContext[ModelServerActor], dataType : S
 
   println(s"Creating a new Model Server for data type $dataType")
 
-  private var currentModel: Option[Model] = None
-  private var newModel: Option[Model] = None
+  private var currentModel: Option[Model[WineRecord, Double]] = None
+  private var newModel: Option[Model[WineRecord, Double]] = None
   var currentState: Option[ModelToServeStats] = None
   private var newState: Option[ModelToServeStats] = None
 

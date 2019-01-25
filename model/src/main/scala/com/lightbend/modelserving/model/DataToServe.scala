@@ -19,7 +19,7 @@
 package com.lightbend.modelserving.model
 
 // Container for the data to serve
-trait DataToServe {
+trait DataToServe[RECORD] {
   def getType : String
-  def getRecord : AnyVal
+  def getRecord : RECORD
 }

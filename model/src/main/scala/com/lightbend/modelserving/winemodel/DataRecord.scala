@@ -26,7 +26,7 @@ import scala.util.Try
 // Container for wine data
 object DataRecord {
 
-  def fromByteArray(message: Array[Byte]): Try[DataToServe] = Try {
+  def fromByteArray(message: Array[Byte]): Try[DataToServe[WineRecord]] = Try {
     DataRecord(WineRecord.parseFrom(message))
   }
 
@@ -35,7 +35,7 @@ object DataRecord {
   }
 }
 
-case class DataRecord(record : WineRecord) extends DataToServe{
+case class DataRecord(record : WineRecord) extends DataToServe[WineRecord]{
   def getType : String = record.dataType
-  def getRecord : AnyVal = record.asInstanceOf[AnyVal]
+  def getRecord : WineRecord = record
 }

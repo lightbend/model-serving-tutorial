@@ -32,7 +32,7 @@ import scala.collection._
 
 // Abstract class for any PMML model processing. It has to be extended by the user
 // implement score method, based on his own model. Serializability here is required for Spark
-abstract class PMMLModel(inputStream: Array[Byte]) extends Model with Serializable {
+abstract class PMMLModel[RECORD,RESULT](inputStream: Array[Byte]) extends Model[RECORD,RESULT] with Serializable {
 
   var arguments : mutable.Map[FieldName, FieldValue] = _
   var pmml : PMML = _
@@ -67,7 +67,7 @@ abstract class PMMLModel(inputStream: Array[Byte]) extends Model with Serializab
 
   override def equals(obj: Any): Boolean = {
     obj match {
-      case pmmlModel: PMMLModel =>
+      case pmmlModel: PMMLModel[RECORD,RESULT] =>
         pmmlModel.toBytes.toList == inputStream.toList
       case _ => false
     }

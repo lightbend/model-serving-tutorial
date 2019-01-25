@@ -37,42 +37,42 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.{ListBuffer, Map}
 
 object DataProcessorMap{
-  def apply() = new DataProcessorMap
+  def apply[RECORD, RESULT]() = new DataProcessorMap[RECORD, RESULT]
 }
 
-class DataProcessorMap extends RichCoFlatMapFunction[DataToServe, ModelToServe, ServingResult] with CheckpointedFunction {
+class DataProcessorMap[RECORD, RESULT] extends RichCoFlatMapFunction[DataToServe[RECORD], ModelToServe, ServingResult[RESULT]] with CheckpointedFunction {
 
   // Current models
-  private var currentModels = Map[String, (String,Model)]()
+  private var currentModels = Map[String, (String,Model[RECORD, RESULT])]()
   // New models
-  private var newModels = Map[String, (String,Model)]()
+  private var newModels = Map[String, (String,Model[RECORD, RESULT])]()
 
   // Checkpointing state
-  @transient private var checkpointedState: ListState[ModelWithType] = _
+  @transient private var checkpointedState: ListState[ModelWithType[RECORD, RESULT]] = _
 
   // Create a snapshot
   override def snapshotState(context: FunctionSnapshotContext): Unit = {
     // Clear checkpointing state
     checkpointedState.clear()
     // Populate checkpointing state
-    currentModels.foreach(entry => checkpointedState.add(new ModelWithType(true, entry._1, entry._2)))
-    newModels.foreach(entry => checkpointedState.add(new ModelWithType(false, entry._1, entry._2)))
+    currentModels.foreach(entry => checkpointedState.add(new ModelWithType[RECORD, RESULT](true, entry._1, entry._2)))
+    newModels.foreach(entry => checkpointedState.add(new ModelWithType[RECORD, RESULT](false, entry._1, entry._2)))
   }
 
   // Restore checkpoint
   override def initializeState(context: FunctionInitializationContext): Unit = {
     // Checkpointing descriptor
-    val checkPointDescriptor = new ListStateDescriptor[ModelWithType] (
+    val checkPointDescriptor = new ListStateDescriptor[ModelWithType[RECORD, RESULT]] (
         "modelState",
-        new ModelWithTypeSerializer)
+        new ModelWithTypeSerializer[RECORD, RESULT])
     // Get checkpointing data
     checkpointedState = context.getOperatorStateStore.getListState (checkPointDescriptor)
 
     // If restored
     if (context.isRestored) {
       // Create state
-      val nm = new ListBuffer[(String, (String, Model))]()
-      val cm = new ListBuffer[(String, (String, Model))]()
+      val nm = new ListBuffer[(String, (String, Model[RECORD, RESULT]))]()
+      val cm = new ListBuffer[(String, (String, Model[RECORD, RESULT]))]()
       checkpointedState.get().iterator().asScala.foreach(modelWithType => {
         // For each model in the checkpointed state
         modelWithType.isCurrent match {
@@ -87,17 +87,17 @@ class DataProcessorMap extends RichCoFlatMapFunction[DataToServe, ModelToServe, 
   }
 
   // Process new model
-  override def flatMap2(model: ModelToServe, out: Collector[ServingResult]): Unit = {
+  override def flatMap2(model: ModelToServe, out: Collector[ServingResult[RESULT]]): Unit = {
 
     println(s"New model - $model")
-    ModelToServe.toModel(model) match {                     // Inflate model
+    ModelToServe.toModel[RECORD, RESULT](model) match {                     // Inflate model
       case Some(md) => newModels += (model.dataType -> (model.name, md))  // Save a new model
       case _ =>
     }
   }
 
   // Serve data
-  override def flatMap1(record: DataToServe, out: Collector[ServingResult]): Unit = {
+  override def flatMap1(record: DataToServe[RECORD], out: Collector[ServingResult[RESULT]]): Unit = {
     // See if we need to update
     newModels.contains(record.getType) match {    // There is a new model for this type
       case true =>
@@ -118,7 +118,7 @@ class DataProcessorMap extends RichCoFlatMapFunction[DataToServe, ModelToServe, 
         val result = model._2.score(record.getRecord)
         val duration = System.currentTimeMillis() - start
         // write result out
-        out.collect(ServingResult(model._1, record.getType, record.getRecord.asInstanceOf[WineRecord].ts, result.asInstanceOf[Double]))
+        out.collect(ServingResult[RESULT](model._1, record.getType, record.getRecord.asInstanceOf[WineRecord].ts, result))
       case _ =>
     }
   }

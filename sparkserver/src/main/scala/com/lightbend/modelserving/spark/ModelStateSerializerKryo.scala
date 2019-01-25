@@ -25,6 +25,7 @@ package com.lightbend.modelserving.spark
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 import com.lightbend.model.modeldescriptor.ModelDescriptor
+import com.lightbend.model.winerecord.WineRecord
 import com.lightbend.modelserving.model.ModelFactoryResolver
 import org.apache.spark.serializer.KryoRegistrator
 import com.lightbend.modelserving.winemodel.pmml.WinePMMLModel
@@ -96,10 +97,10 @@ class ModelStateSerializerKryo extends Serializer[ModelState]{
 object ModelStateSerializerKryo{
 
   // Model Factory resolver
-  private var resolver : ModelFactoryResolver = _
+  private var resolver : ModelFactoryResolver[WineRecord, Double] = _
 
   // This method has to be invoked before execution starts
-  def setResolver(res : ModelFactoryResolver) : Unit = resolver = res
+  def setResolver(res : ModelFactoryResolver[WineRecord, Double]) : Unit = resolver = res
   // Ensure that resolver is set
   private def validateResolver() : Unit = if(resolver == null) throw new Exception("Model factory resolver is not set")
 }

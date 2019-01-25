@@ -20,12 +20,13 @@ package com.lightbend.modelserving.akka
 
 import akka.Done
 import akka.actor.typed.ActorRef
+import com.lightbend.model.winerecord.WineRecord
 import com.lightbend.modelserving.model.{DataToServe, ModelToServe, ModelToServeStats, ServingResult}
 
 // Controller
 trait ModelServerActor
 case class ModelUpdate(reply: ActorRef[Done], model : ModelToServe) extends ModelServerActor with ModelServerManagerActor
-case class ServeData(reply: ActorRef[Option[ServingResult]], record : DataToServe) extends ModelServerActor with ModelServerManagerActor
+case class ServeData(reply: ActorRef[Option[ServingResult[Double]]], record : DataToServe[WineRecord]) extends ModelServerActor with ModelServerManagerActor
 case class GetState(reply: ActorRef[ModelToServeStats], dataType : String) extends ModelServerActor with ModelServerManagerActor
 
 // Controller manager

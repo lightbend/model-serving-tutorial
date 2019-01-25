@@ -103,7 +103,7 @@ object SparkStructuredModelServer {
     val servingresultsstream = datamodelstream
       .filter(_.dataType.length > 0)
       .groupByKey(_.dataType)
-      .mapGroupsWithState(GroupStateTimeout.NoTimeout())(modelServing).as[Seq[ServingResult]]
+      .mapGroupsWithState(GroupStateTimeout.NoTimeout())(modelServing).as[Seq[ServingResult[Double]]]
       .withColumn("value", explode($"value"))
       .select("value.name", "value.dataType", "value.duration", "value.result")
 
@@ -126,8 +126,8 @@ object SparkStructuredModelServer {
   // For some descriptions on documentation and how it works see:
   // http://www.waitingforcode.com/apache-spark-structured-streaming/stateful-transformations-mapgroupswithstate/read
   // and https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.streaming.GroupState
-  def modelServing(key: String, values: Iterator[DataWithModel], state: GroupState[ModelState]) : Seq[ServingResult] = {
-    var results = new ListBuffer[ServingResult]()
+  def modelServing(key: String, values: Iterator[DataWithModel], state: GroupState[ModelState]) : Seq[ServingResult[Double]] = {
+    var results = new ListBuffer[ServingResult[Double]]()
     values.foreach(value => {
       value.data match {
         case null =>  // This model
@@ -148,7 +148,7 @@ object SparkStructuredModelServer {
           }
         case _ => // This is data
           if (state.exists) {
-            val result = state.get.model.score(value.data.asInstanceOf[AnyVal]).asInstanceOf[Double]
+            val result = state.get.model.score(value.data)
             results += ServingResult(state.get.name, value.dataType, System.currentTimeMillis() - value.data.ts, result)
           }
           else
