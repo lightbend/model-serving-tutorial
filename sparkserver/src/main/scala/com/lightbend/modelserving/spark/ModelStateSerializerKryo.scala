@@ -24,12 +24,9 @@ package com.lightbend.modelserving.spark
 
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
-import com.lightbend.model.modeldescriptor.ModelDescriptor
 import com.lightbend.model.winerecord.WineRecord
 import com.lightbend.modelserving.model.ModelFactoryResolver
 import org.apache.spark.serializer.KryoRegistrator
-import com.lightbend.modelserving.winemodel.pmml.WinePMMLModel
-import com.lightbend.modelserving.winemodel.tensorflow.WineTensorFlowModel
 
 
 class ModelStateSerializerKryo extends Serializer[ModelState]{

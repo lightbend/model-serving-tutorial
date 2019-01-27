@@ -48,14 +48,15 @@ object DataWithModel{
   def dataFromByteArrayStructured(message: Array[Byte]): DataWithModel =  {
 
     DataRecord.fromByteArray(message).toOption match {
-      case Some(data) => DataWithModel(data.getType, data.getRecord.asInstanceOf[WineRecord], null)
+      case Some(data) => DataWithModel(data.getType, data.getRecord, null)
       case _ => emptyModel
     }
   }
+
   def dataWineFromByteArrayStructured(message: Array[Byte]): WineRecord =  {
 
     DataRecord.fromByteArray(message).toOption match {
-      case Some(data) => data.getRecord.asInstanceOf[WineRecord]
+      case Some(data) => data.getRecord
       case _ => new WineRecord
     }
   }
