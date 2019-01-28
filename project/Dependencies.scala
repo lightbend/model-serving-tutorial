@@ -25,13 +25,13 @@ object Dependencies {
   val curator               = "org.apache.curator"      % "curator-test"                        % curatorVersion                 // ApacheV2
   val commonIO              = "commons-io"              % "commons-io"                          % commonIOVersion
 
-  val tensorflow            = "org.tensorflow"          % "tensorflow"                          % tensorflowVersion
-  val tensoeflowProto       = "org.tensorflow"          % "proto"                               % tensorflowVersion
+  val tensorFlow            = "org.tensorflow"          % "tensorflow"                          % tensorflowVersion
+  val tensorFlowProto       = "org.tensorflow"          % "proto"                               % tensorflowVersion
   val PMMLEvaluator         = "org.jpmml"               % "pmml-evaluator"                      % PMMLVersion
   val PMMLExtensions        = "org.jpmml"               % "pmml-evaluator-extension"            % PMMLVersion
 
-  val flinkScala            = "org.apache.flink"        % "flink-scala_2.11"                    % flinkVersion
-  val flinkStreaming        = "org.apache.flink"        % "flink-streaming-scala_2.11"          % flinkVersion
+  val flinkScala            = "org.apache.flink"        %% "flink-scala"                        % flinkVersion
+  val flinkStreaming        = "org.apache.flink"        %% "flink-streaming-scala"              % flinkVersion
   val flinkKafka            = "org.apache.flink"        %% "flink-connector-kafka"              % flinkVersion
   val flinkQueryableRuntime = "org.apache.flink"        %% "flink-queryable-state-runtime"      % flinkVersion
   val flinkQueryableClient  = "org.apache.flink"        %% "flink-queryable-state-client-java"  % flinkVersion
@@ -45,16 +45,16 @@ object Dependencies {
 
   val kryo                  = "com.esotericsoftware.kryo" % "kryo"                              % kryoVersion
 
-  val reactiveKafka         = "com.typesafe.akka"       %% "akka-stream-kafka"                  % reactiveKafkaVersion
+  val reactiveKafka         = "com.typesafe.akka"       %% "akka-stream-kafka"                  % alpakkaKafkaVersion
 
   val akkaStreamTyped       = "com.typesafe.akka"       %% "akka-stream-typed"                  % akkaVersion
   val akkaHttp              = "com.typesafe.akka"       %% "akka-http"                          % akkaHttpVersion
   val akkaHttpJsonJackson   = "de.heikoseeberger"       %% "akka-http-jackson"                  % akkaHttpJsonVersion
   val akkatyped             = "com.typesafe.akka"       %% "akka-actor-typed"                   % akkaVersion
-  
+
   val gson                  = "com.google.code.gson"    % "gson"                                % gsonVersion
 
-  val modelsDependencies = Seq(PMMLEvaluator, PMMLExtensions, tensorflow, tensoeflowProto)
+  val modelsDependencies = Seq(PMMLEvaluator, PMMLExtensions, tensorFlow, tensorFlowProto)
   val flinkDependencies = Seq(flinkScala, flinkStreaming, flinkKafka, flinkQueryableRuntime, flinkQueryableClient, joda)
   val sparkDependencies = Seq(sparkcore, sparkstreaming, sparkkafka, sparkSQL, sparkSQLkafka)
   val akkaServerDependencies = Seq(reactiveKafka, akkaStreamTyped, akkatyped, akkaHttp, akkaHttpJsonJackson, reactiveKafka)

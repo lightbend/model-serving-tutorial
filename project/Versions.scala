@@ -31,7 +31,7 @@ object Versions {
   val sparkVersion          = "2.4.0"
   val kryoVersion           = "2.24.0"
 
-  val reactiveKafkaVersion  = "0.22"
+  val alpakkaKafkaVersion   = "1.0-RC1"
   val akkaVersion           = "2.5.19"
   val akkaHttpVersion       = "10.1.7"
   val akkaHttpJsonVersion   = "1.22.0"
