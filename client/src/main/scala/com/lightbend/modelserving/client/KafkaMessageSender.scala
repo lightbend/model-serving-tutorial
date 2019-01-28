@@ -16,7 +16,7 @@
  *
  */
 
-package com.lightbenf.modelserving.client
+package com.lightbend.modelserving.client
 
 /**
  * Created by boris on 5/10/17.

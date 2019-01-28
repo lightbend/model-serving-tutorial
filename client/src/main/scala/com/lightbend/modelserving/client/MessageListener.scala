@@ -16,7 +16,7 @@
  *
  */
 
-package com.lightbenf.modelserving.client
+package com.lightbend.modelserving.client
 
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
 import org.apache.kafka.common.serialization.ByteArrayDeserializer

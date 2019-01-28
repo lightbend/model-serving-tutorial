@@ -16,12 +16,18 @@
  *
  */
 
-package com.lightbenf.modelserving.client.client
+package com.lightbend.modelserving.client.client
 
-import com.lightbenf.modelserving.client.RecordProcessorTrait
-import org.apache.kafka.clients.consumer.ConsumerRecord
+import com.lightbend.modelserving.client.MessageListener
+import com.lightbend.modelserving.configuration.ModelServingConfiguration._
 
-class RecordProcessor extends RecordProcessorTrait[Array[Byte], Array[Byte]] {
-  override def processRecord(record: ConsumerRecord[Array[Byte], Array[Byte]]): Unit =
-    println("Get Message")
+object DataReader {
+
+  def main(args: Array[String]) {
+
+    println(s"Using kafka brokers at ${KAFKA_BROKER}")
+
+    val listener = MessageListener(KAFKA_BROKER, MODELS_TOPIC, MODELS_GROUP, new RecordProcessor())
+    listener.start()
+  }
 }

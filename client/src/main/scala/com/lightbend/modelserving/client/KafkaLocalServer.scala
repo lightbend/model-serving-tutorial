@@ -16,7 +16,7 @@
  *
  */
 
-package com.lightbenf.modelserving.client
+package com.lightbend.modelserving.client
 
 import java.io.{File, IOException}
 import java.util.Properties
