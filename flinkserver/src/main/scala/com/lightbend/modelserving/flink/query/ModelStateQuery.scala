@@ -54,7 +54,12 @@ object ModelStateQuery {
     // Key type
     val keyType = BasicTypeInfo.STRING_TYPE_INFO
 
-    println("                   Name                      |       Description       |Since       |       Average       |       Min       |       Max       |")
+    // Sample output line, used to compute the following format string:
+    // | winequalityGeneralizedLinearRegressionGaussian | generated from SparkML | 2019/01/28 13:01:61 | 0.3157894736842105 |  0 | 4 |
+    val format       = "| %-50s | %-25s | %-19s | %8.5f | %3d | %3d |\n"
+    val headerFormat = "| %-50s | %-25s | %-19s | %-8s | %-3s | %-3s |\n"
+    printf(headerFormat, "Name", "Description", "Since", "Average", "Min", "Max")
+    printf(headerFormat, "-" * 50, "-" * 25, "-" * 19, "-" * 8, "-" * 3, "-" * 3)
     while(true) {
       for (key <- keys) {
         // For every key
@@ -62,9 +67,9 @@ object ModelStateQuery {
           // Get statistics
           val future = client.getKvState(jobId, "currentModelState", key, keyType, descriptor)
           val stats = future.join().value()
-          println(s" ${stats.name} | ${stats.description} | ${new DateTime(stats.since).
-            toString("yyyy/MM/dd HH:MM:SS")} | ${stats.duration/stats.usage} |" +
-            s"  ${stats.min} | ${stats.max} |")
+          printf(format, stats.name, stats.description,
+            new DateTime(stats.since).toString("yyyy/MM/dd HH:MM:SS"),
+            stats.duration/stats.usage, stats.min, stats.max)
         }
         catch {case e: Exception => e.printStackTrace()}
       }
