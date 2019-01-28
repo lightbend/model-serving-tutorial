@@ -9,13 +9,13 @@
 * [Strata Data Conference San Jose, Tuesday, March 6, 2019](https://conferences.oreilly.com/strata/strata-ca/public/schedule/detail/63983)
 * [Strata Data Conference London, Tuesday, May 22, 2019](https://conferences.oreilly.com/strata/strata-eu/public/schedule/detail/65420)
 
-©Copyright 2019, Lightbend, Inc. Apache 2.0 License. Please use as you see fit, but attribution is requested.
+©Copyright 2018-2019, Lightbend, Inc. Apache 2.0 License. Please use as you see fit, but attribution is requested.
 
 This tutorial provides an introduction to Model Serving.
 
 See the companion presentation for the tutorial in the `presentation` folder:
 
-The core "use case" implemented is a stream processing application that also ingests updated parameters for a machine learning model and then uses the model to score the data. Several implementations of this use case are provided. 
+The core "use case" implemented is a stream processing application that also ingests updated parameters for a machine learning model and then uses the model to score the data. Several implementations of this use case are provided.
 They not only compare Akka Streams vs. Spark and Flink, but they also show how to support a few other common production requirements, such as managing the in-memory state of the application.
 
 First, we will describe how to build and run the applications. Then we will discuss their designs. For reference materials and more information, see the end of this README.
@@ -112,7 +112,7 @@ docker run -p 8501:8501 --name tfserving_wine --mount type=bind,source=/Users/bo
 Here `8501` is the port used by the image to serve REST request which is mapped to local port `8501`
 
 `--name tfserving_wine` : Creates container name that can be used to refer to the running container by name.
- 
+
 `--mount type=bind,source=/Users/boris/Projects/model-serving-tutorial/data/saved,target=/models/wine` mounts local location of the model's directory `/Users/boris/Projects/model-serving-tutorial/data/saved` to container's directory
 
 `-e MODEL_NAME=wine` specifies model's name
@@ -122,8 +122,8 @@ Here `8501` is the port used by the image to serve REST request which is mapped 
 Once the image is up and running, you can execute available [REST APIs](https://www.tensorflow.org/serving/api_rest), to get information about deployed model, for example
 ````
 http://localhost:8501/v1/models/wine/versions/1
-````   
-to get the status of the deployed model or 
+````
+to get the status of the deployed model or
 ````
 http://localhost:8501/v1/models/wine/versions/1/metadata
 ````
@@ -148,13 +148,13 @@ This implementation is provided in [Tensorflow project](tensorflowserver) and sh
 Such implementation basically requires a stateful stream processing for the main data stream with the state being updatable by a second stream - state update stream. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
 ![Image](images/Dynamically%20controlled%20streams.png).
 In this tutorial we will demostrate how to implement this approach leveraging the popular streaming framework - [Akka Streams](https://doc.akka.io/docs/akka/2.5/stream/) and Streaming servers -
-[Spark structured Streaming](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html) and [Flink](https://flink.apache.org/). 
+[Spark structured Streaming](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html) and [Flink](https://flink.apache.org/).
 ### Akka Streams implementation
 
 This implementation shows how to use Akka Stream (along with [Akka Actors](https://doc.akka.io/docs/akka/current/typed/guide/actors-motivation.html#why-modern-systems-need-a-new-programming-model) and [Akka HTTP](https://doc.akka.io/docs/akka-http/current/))
-for implementing model serving leveraging dynamically controlled stream pattern. 
+for implementing model serving leveraging dynamically controlled stream pattern.
 
-The implementation is using Akka Streams with [Reactive Kafka](https://github.com/akka/alpakka-kafka) for connecting to Kafka and Akka Actors for implementing execution state. 
+The implementation is using Akka Streams with [Reactive Kafka](https://github.com/akka/alpakka-kafka) for connecting to Kafka and Akka Actors for implementing execution state.
 
 Akka Actors's implementation is leveraging [Akka Typed](https://doc.akka.io/docs/akka/current/typed/index.html). The class [TypedMessages](akkaserver/src/main/scala/com/lightbend/modelserving/akka/TypedMessages.scala) contains definitions
 of the messages used for Actors and Actor's types. We are using here two actors:
@@ -177,12 +177,12 @@ Execution of examples is done using [ModelServingKeyedJob](flinkserver/src/main/
 
 ### Spark Structured Streaming implementation
 
-This implementation shows how to use Spark Structured Streaming for implementing model serving leveraging dynamically controlled stream pattern. 
+This implementation shows how to use Spark Structured Streaming for implementing model serving leveraging dynamically controlled stream pattern.
 
 The first implementation [SparkStructuredModelServer](sparkserver/src/main/scala/com/lightbend/modelserving/spark/server/SparkStructuredModelServer.scala) is leveraging recommended by Spark streaming approach - streams [union](https://spark.apache.org/docs/latest/streaming-programming-guide.html) and [mapGroupsWithState](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#arbitrary-stateful-operations).
 This implementation works, but requires usage of Spark mini batching, which is sub optimal for model serving implementations.
 
 A diffirent implementation - [SparkStructuredStateModelServer](sparkserver/src/main/scala/com/lightbend/modelserving/spark/server/SparkStructuredStateModelServer.scala) (suggested by [Gerard Maas](https://www.linkedin.com/in/gerardmaas/?originalSubdomain=be)) avoids this drawback by
-explicitely splitting streams and using model stream processing (based on [Spark Streaming](https://spark.apache.org/docs/latest/streaming-programming-guide.html)) as an external loop and data processing 
+explicitely splitting streams and using model stream processing (based on [Spark Streaming](https://spark.apache.org/docs/latest/streaming-programming-guide.html)) as an external loop and data processing
 (based on [Spark Structured Streaming](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html)) as an inner loop.
 This approach allows to significantly simplify implementation and use Spark's [Low Latency Continious Processing](https://databricks.com/blog/2018/03/20/low-latency-continuous-processing-mode-in-structured-streaming-in-apache-spark-2-3-0.html), which allows for real time model serving.
