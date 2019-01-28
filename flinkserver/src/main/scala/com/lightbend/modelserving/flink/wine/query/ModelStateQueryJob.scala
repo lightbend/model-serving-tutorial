@@ -53,11 +53,11 @@ object ModelStateQueryJob {
 
   protected def help() {
     println("""
-      |Usage: ModelStateQueryJob [-h|--help] [-f|--file id_file_path] [-i|--id id]
+      |Usage: ...ModelStateQueryJob [-h|--help] [-f|--file id_file_path] [-i|--id ID]
       |Where:
       |-h | --help               Show this help and exit
       |-f | --file id_file_path  Read the ID from this file. Defaults to "./ModelServingKeyedJob.id"
-      |-i | --id id              Use this ID
+      |-i | --id ID              Use this ID
       |
       |So, the default behavior is to read the ID from the default file.
       |""".stripMargin)
