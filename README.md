@@ -9,9 +9,9 @@
 * [Strata Data Conference San Jose, Tuesday, March 6, 2019](https://conferences.oreilly.com/strata/strata-ca/public/schedule/detail/63983)
 * [Strata Data Conference London, Tuesday, May 22, 2019](https://conferences.oreilly.com/strata/strata-eu/public/schedule/detail/65420)
 
-©Copyright 2018-2019, Lightbend, Inc. Apache 2.0 License. Please use as you see fit, but attribution is requested.
+©Copyright 2017-2019, Lightbend, Inc. Apache 2.0 License. Please use as you see fit, at your own risk, but attribution is requested.
 
-This tutorial provides a hands-on introduction to serving machine learning models in the context of streaming data services written with [Apache Spark](http://spark.apache.org/), [Apache Flink](http://flink.apache.org/), and microservice tools like [Akka Streams](https://doc.akka.io/docs/akka/2.5/stream/). It discusses implementation options like [TensorFlow Serving](https://www.tensorflow.org/serving/), embedded ML libraries, and Kafka as the "data backplane" - the conduit between various services, sources, and sinks.
+This tutorial provides a hands-on introduction to serving machine learning models in the context of streaming data services written with [Apache Spark](http://spark.apache.org/), [Apache Flink](http://flink.apache.org/), and microservice tools like [Akka Streams](https://doc.akka.io/docs/akka/2.5/stream/). It discusses implementation options like [TensorFlow Serving](https://www.tensorflow.org/serving/), embedded ML libraries, and [Apache Kafka](http://kafka.apache.org/) as the "data backplane" - the conduit between various services, sources, and sinks.
 
 See the companion presentation for the tutorial in the `presentation` folder:
 
@@ -71,7 +71,7 @@ In IntelliJ, use these steps:
 
 ## SBT Projects
 
-The SBT build is organized into several projects under the `root` project. There are four projects that illustrate model-serving techniques: `akkaserver`, `flinkserver`, `sparkserver`, `tensorflowserver`. There are four supporting projects: `client`, `configuration`, `model`, `protobufs`. Finally, the `data` directory contains all the data and models used.
+The SBT build is organized into several projects under the `root` project. There are four projects that illustrate model-serving techniques: `akkaserver`, `flinkserver`, `sparkserver`, `tensorflowserver`. There are four supporting projects: `client`, `configuration`, `model`, `protobufs`. Finally, the `data` directory contains all the data and models used. A data set for wine is used.
 
 ### Supporting Projects
 
@@ -84,9 +84,9 @@ This is a supporting project defining two [Google Protobuf](https://developers.g
 Model is a generic schema that supports many different model implementations. We will use two of them throughout the code:
 
 * [PMML](http://dmg.org/pmml/v4-3/GeneralStructure.html)
-* [Tensorflow](https://www.tensorflow.org/).
+* [TensorFlow](https://www.tensorflow.org/).
 
-For Tensorflow, there are two format options for exported (saved) models:
+For TensorFlow, there are two format options for exported (saved) models:
 
 * [Optimized](https://blog.metaflow.fr/tensorflow-how-to-freeze-a-model-and-serve-it-with-a-python-api-d4f3596b3adc)
 * [Saved Model Bundle](https://www.tensorflow.org/api_docs/java/reference/org/tensorflow/SavedModelBundle) (the one used by TensorFlow _bundle_).
@@ -95,102 +95,281 @@ You can find the code for both, but we will only used optimized models in our ex
 
 ### Client
 
-For all of the code examples we are using [Kafka](https://kafka.apache.org/) to implement both data and model streams.
-Client code is used to implement (send) both Model and Data streams.
+For all of the code examples we are using [Apache Kafka](https://kafka.apache.org/) to store both data and model streams. The `client` project is used to send both of these streams, simulating some source of raw data and the output of a model-training system, respectively.
 
-In addition this project includes local Kafka server implementing Kafka without downloading and installing Kafka on your box.
+This project uses a local, in-memory Kafka server that implements Kafka without the need to download, install, and run Kafka separately on your development machine.
 
-To Start client, run [DataProvider](client/src/main/scala/com/lightbenf/modelserving/client/client/DataProvider.scala) class ()in Intellij just left click on the file and pick run). Additionally
-you can use [DataReader](client/src/main/scala/com/lightbenf/modelserving/client/client/DataReader.scala) to validate that everything is working correctly and messages are published.
+Two applications (i.e., classes with `main` methods) are provided in the `client` project:
+
+* [DataProvider.scala](client/src/main/scala/com/lightbend/modelserving/client/client/DataProvider.scala): Writes the data and model parameters to Kafka topics
+* [DataReader.scala](client/src/main/scala/com/lightbend/modelserving/client/client/DataReader.scala): Reads the Kafka topics to validate that messages are published correctly
+
+You'll need to run `DataProvider` when running any of the other apps. In IntelliJ, just left click on the file and pick `run`. Other IDEs work similarly.
+
+If you are using SBT in a terminal, use the following convention that specifies which SBT project you want to run apps from, the `client` in this example. Then select the executable to run from the list presented:
+
+```
+sbt:model-serving-tutorial> client/run
+
+Multiple main classes detected, select one to run:
+
+ [1] com.lightbend.modelserving.client.client.DataProvider
+ [2] com.lightbend.modelserving.client.client.DataReader
+
+Enter number: 1
+...
+```
+
+If you know the fully qualified name of a specific executable, for example the `DataProvider` just shown, you can run it using `runMain`:
+
+```
+sbt:model-serving-tutorial> client/runMain com.lightbend.modelserving.client.client.DataProvider
+...
+```
+
+> **Notes:**
+>
+> 1. You will need one terminal for _each_ service executed concurrently
+> 2. When an app takes command-line arguments, simply append them to the `project/run` or `project/runMain ...` command
 
 ### Configuration
 
-To make sure that the same Kafka brokers and topics are used across all implementations configuration project contains all of this information.
+To make sure that the same Kafka brokers and topics are used across all implementations, the `configuration` project contains all of this shared information.
 
 ### Model
 
-This project incorporates the basic model and data operations. The omplementation is split into two main parts -
-generic, implementation that does not depend on data and Wine model, specific for the wine model.
+The `model` project incorporates the basic model and data operations. The implementation is split into two main parts:
 
-## Using external services for model serving
-Here we will show how to use Tensorflow serving. Alternatively one can use [Seldon-core](https://github.com/SeldonIO/seldon-core), [NVIDIA Tensor RT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html), etc.
+* generic implementation that does not depend on data and the wine model
+* specific implementation for the wine model
 
-### Using Tensorflow serving
+## Using External Services for Model Serving
 
-The easiest way to use Tensorflow serving is [using Tensorflow Docker image](https://medium.com/tensorflow/serving-ml-quickly-with-tensorflow-serving-and-docker-7df7094aa008).
-To do this first pull tensorflow image:
-````
-docker pull tensorflow/serving
-````
-Once you have it locally, you can start the image using the following command:
-````
-docker run -p 8501:8501 --name tfserving_wine --mount type=bind,source=/Users/boris/Projects/model-serving-tutorial/data/saved,target=/models/wine -e MODEL_NAME=wine -t tensorflow/serving
-````
-Here `8501` is the port used by the image to serve REST request which is mapped to local port `8501`
+One way to serve models in a streaming pipeline is to use an external service to which you delegate scoring. Here we will show how to use _TensorFlow Serving_.
 
-`--name tfserving_wine` : Creates container name that can be used to refer to the running container by name.
+Alternatively, other options that we won't investigate here include the following:
 
-`--mount type=bind,source=/Users/boris/Projects/model-serving-tutorial/data/saved,target=/models/wine` mounts local location of the model's directory `/Users/boris/Projects/model-serving-tutorial/data/saved` to container's directory
+* [Seldon-core](https://github.com/SeldonIO/seldon-core)
+* [NVIDIA Tensor RT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html)
 
-`-e MODEL_NAME=wine` specifies model's name
+### Using TensorFlow Serving
 
-`-t tensorflow/serving` specifies image to use, `tensorflow/serving:latest` in our case
+The easiest way to use TensorFlow Serving is to use the TensorFlow Docker image, as described [here](https://medium.com/tensorflow/serving-ml-quickly-with-tensorflow-serving-and-docker-7df7094aa008).
 
-Once the image is up and running, you can execute available [REST APIs](https://www.tensorflow.org/serving/api_rest), to get information about deployed model, for example
-````
-http://localhost:8501/v1/models/wine/versions/1
-````
-to get the status of the deployed model or
-````
-http://localhost:8501/v1/models/wine/versions/1/metadata
-````
-to get metadata about deployed model.
+We'll need to pass the location of this tutorial on your machine to the running container, so we'll first define an environment variable, `TUTORIAL_HOME` to point to this directory, for example:
 
-Rest APIs also allow to serve model:
-````
+```
+export TUTORIAL_HOME=$HOME/model-serving-tutorial # Bash
+set TUTORIAL_HOME=%HOME%\model-serving-tutorial   # Windows
+```
+
+Edit as appropriate for your machine. Now you can start the image using the following command:
+
+```bash
+docker run -p 8501:8501 --name tfserving_wine --mount type=bind,source=$TUTORIAL_HOME/data/saved,target=/models/wine -e MODEL_NAME=wine -t tensorflow/serving
+```
+
+On Windows, use `%TUTORIAL_HOME%`.
+
+Here `8501` is the port used by the image to serve REST request which is mapped to local port `8501`.
+
+`--name tfserving_wine` creates the container name that can be used to refer to the running container by name.
+
+`--mount type=bind,source=$TUTORIAL_HOME/data/saved,target=/models/wine` mounts the local location of the model's directory `$TUTORIAL_HOME/data/saved` to the container's directory `/models/wine`.
+
+`-e MODEL_NAME=wine` specifies model's name.
+
+`-t tensorflow/serving` specifies the image to use, `tensorflow/serving:latest` in our case
+
+Once the image is up and running, you can visit the available [REST APIs](https://www.tensorflow.org/serving/api_rest), to get information about deployed model, for example:
+
+* http://localhost:8501/v1/models/wine/versions/1 to get the status of the deployed model
+* http://localhost:8501/v1/models/wine/versions/1/metadata to get metadata about deployed model.
+
+Rest APIs are also used to serve the model:
+
+```bash
 curl -X POST http://localhost:8501/v1/models/wine/versions/1:predict -d '{"signature_name":"predict","instances":[{"inputs":[7.4,0.7,0.0,1.9,0.076,11.0,34.0,0.9978,3.51,0.56,9.4]}]}'
-````
-This returns result:
-````
+```
+
+This returns the following result:
+
+```json
 {
     "predictions": [[1.14877e-09, 3.39649e-09, 1.19725e-08, 0.014344, 0.0618138, 0.689735, 0.304, 0.0153118, 0.000971983]]
 }
-````
-### Using Tensorflow serving programmatically
+```
 
-This implementation is provided in [Tensorflow project](tensorflowserver) and shows how akka streams can leverage Tensorflow serving REST APIs in Akka Streams implementation.
+### Using TensorFlow Serving Programmatically
 
-## Using Dynamically controlled Streams for model serving
+The `tensorflowserver` shows how Akka Streams can leverage TensorFlow Serving REST APIs in an Akka Streams implementation.
 
-Such implementation basically requires a stateful stream processing for the main data stream with the state being updatable by a second stream - state update stream. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
+There is one application in this project:
+
+* [TFServingModelServer.scala](client/src/main/scala/com/lightbend/modelserving/tensorflowserving/TFServingModelServer.scala): Reads the wine data stream and calls TensorFlow Serving to score the wine records.
+
+Recall that you'll need to run the `client` project `DataProvider` while running any of the other apps, including `TFServingModelServer`. To run `TFServingModelServer` in IntelliJ, just left click on the file and pick `run`. Other IDEs work similarly.
+
+If you are using SBT in a terminal, you'll need a new terminal running SBT to run `TFServingModelServer`, as the first terminal will be "busy" running `DataProvider`.
+
+Since there is only one app in the `tensorflowserver` project, using `tensorflowserver/run` won't prompt for an app to run:
+
+```
+sbt:model-serving-tutorial> tensorflowserver/run
+
+[info] Packaging .../model-serving-tutorial/model/target/scala-2.12/model_2.12-0.1.0-SNAPSHOT.jar ...
+[info] Packaging .../model-serving-tutorial/tensorflowserver/target/scala-2.12/tensorflowserver_2.12-0.1.0-SNAPSHOT.jar ...
+[info] Done packaging.
+[info] Done packaging.
+[info] Running com.lightbend.modelserving.tensorflowserving.TFServingModelServer
+Creating a new Model Server
+Akka model server, brokers localhost:9092
+0    [ModelServing-akka.kafka.default-dispatcher-6] INFO  org.apache.kafka.clients.consumer.ConsumerConfig  - ConsumerConfig values:
+  auto.commit.interval.ms = 5000
+  auto.offset.reset = earliest
+...
+Model serving in 30 ms, with result 6.0 (model TensorFlow Model Serving, data type wine)
+Model serving in 49 ms, with result 6.0 (model TensorFlow Model Serving, data type wine)
+...
+```
+
+The last few lines shown are records being scored and how long it took.
+
+> **Note:** The time shown is a calculated delta between the timestamp in the record and the end of scoring).
+
+For completeness, you can also run the app with the fully-qualified name, using `runMain`:
+
+```
+sbt:model-serving-tutorial> tensorflowserver/runMain com.lightbend.modelserving.tensorflowserving.TFServingModelServer
+...
+```
+
+## Using Dynamically Controlled Streams for Model Serving
+
+_Dynamically Controlled Streams_ is a general pattern where the behavior of the stream processing in changed at runtime through some signaling mechanism. In this case, we change the behavior by updating the model that gets served. The model is effectively the state of the stream. Hence, such an implementation requires stateful stream processing for the main data stream with the state being updatable by a second stream, which we'll call the _state update stream_. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
+
+The following image shows the structure:
+
 ![Image](images/Dynamically%20controlled%20streams.png).
-In this tutorial we will demostrate how to implement this approach leveraging the popular streaming framework - [Akka Streams](https://doc.akka.io/docs/akka/2.5/stream/) and Streaming servers -
+
+In this tutorial, we will demonstrate how to implement this approach using a popular streaming library, [Akka Streams](https://doc.akka.io/docs/akka/2.5/stream/), and the streaming services,
 [Spark structured Streaming](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html) and [Flink](https://flink.apache.org/).
-### Akka Streams implementation
 
-This implementation shows how to use Akka Stream (along with [Akka Actors](https://doc.akka.io/docs/akka/current/typed/guide/actors-motivation.html#why-modern-systems-need-a-new-programming-model) and [Akka HTTP](https://doc.akka.io/docs/akka-http/current/))
-for implementing model serving leveraging dynamically controlled stream pattern.
+### Akka Streams Implementation
 
-The implementation is using Akka Streams with [Reactive Kafka](https://github.com/akka/alpakka-kafka) for connecting to Kafka and Akka Actors for implementing execution state.
+The `akkaserver` project contains the implementation that uses [Akka Streams](https://doc.akka.io/docs/akka/2.5/stream/), along with [Akka Actors](https://doc.akka.io/docs/akka/current/typed/guide/actors-motivation.html#why-modern-systems-need-a-new-programming-model) and [Akka HTTP](https://doc.akka.io/docs/akka-http/current/),
+for implementing model serving using the Dynamically Controlled Stream pattern.
 
-Akka Actors's implementation is leveraging [Akka Typed](https://doc.akka.io/docs/akka/current/typed/index.html). The class [TypedMessages](akkaserver/src/main/scala/com/lightbend/modelserving/akka/TypedMessages.scala) contains definitions
-of the messages used for Actors and Actor's types. We are using here two actors:
-* [ModelServer](akkaserver/src/main/scala/com/lightbend/modelserving/akka/ModelServerBehavior.scala) which implements the actual model serving (leveraging classes in the Model project) and manages the state - the model.
-* [ModelServerManager](akkaserver/src/main/scala/com/lightbend/modelserving/akka/ModelServerManagerBehavior.scala) which manages ModelServer classes (creating an instance of an Actor for every data type) and providing a single entry point for models and data processing.
+The [Alpakka Kafka connector](https://github.com/akka/alpakka-kafka) is used to connect to Kafka to the Akka Streams.
 
-Additionally we implement [Queryable State Pattern](https://kafka.apache.org/10/documentation/streams/developer-guide/interactive-queries.html). The implementation allows to get model serving statistics stored in the Actors, and uses [QueriesAkkaHTTPResource](akkaserver/src/main/scala/com/lightbend/modelserving/akka/QueriesAkkaHttpResource.scala) class.
-Finally Akka Streams implementation [AkkaModelServer](akkaserver/src/main/scala/com/lightbend/modelserving/akka/AkkaModelServer.scala) bringing all pieces together. Running this class will
-produce [ServingResult](model/src/main/scala/com/lightbend/modelserving/model/ModelToServe.scala). Here execution time is a time from message submission to the point when a result can be used. So it includes message submission and Kafka time in addition to the actual model serving.
+Akka Actors are used to implement the execution state. Specifically, the new [Akka Typed](https://doc.akka.io/docs/akka/current/typed/index.html) API is used. The class [TypedMessages](akkaserver/src/main/scala/com/lightbend/modelserving/akka/TypedMessages.scala) contains definitions of the messages used for Actors and Actor's types. We are using here two actors:
 
-### Flink implementation
+* [ModelServerBehavior](akkaserver/src/main/scala/com/lightbend/modelserving/akka/ModelServerBehavior.scala), which implements the actual model serving, leveraging classes in the `model` project, and manages the state, which is the model itself.
+* [ModelServerManagerBehavior](akkaserver/src/main/scala/com/lightbend/modelserving/akka/ModelServerManagerBehavior.scala), which manages `ModelServer` classes, creating an instance of an Akka Actor for every data type, and provides a single entry point for processing models and data.
 
-This implementation shows how to use Flink's [low level joins](https://ci.apache.org/projects/flink/flink-docs-stable/dev/stream/operators/process_function.html) for implementing model serving leveraging dynamically controlled stream pattern.
-There are 2 implementations there:
-* [Key based implementation](flinkserver/src/main/scala/com/lightbend/modelserving/flink/keyed/DataProcessorKeyed.scala) based on [Processor Function](https://ci.apache.org/projects/flink/flink-docs-release-1.7/dev/stream/operators/process_function.html#low-level-joins)
-* [Partition based implementation](flinkserver/src/main/scala/com/lightbend/modelserving/flink/partitioned/DataProcessorMap.scala) based on [RichCoFlatMapFunction](https://www.da-platform.com/blog/bettercloud-dynamic-alerting-apache-flink)
-Both implementations work and a choice depends on load and distribution of the data types. See [this](https://cwiki.apache.org/confluence/display/FLINK/FLIP-23+-+Model+Serving) for more details.
+Additionally we implement the [Queryable State Pattern](https://kafka.apache.org/10/documentation/streams/developer-guide/interactive-queries.html), which provides convenient REST access to the internal state of the stream without the need to write that state to a persistent store and query it from there. Specifically, our implementation, [QueriesAkkaHTTPResource](akkaserver/src/main/scala/com/lightbend/modelserving/akka/QueriesAkkaHttpResource.scala), provides access to the model serving statistics stored in the Actors.
 
-Execution of examples is done using [ModelServingKeyedJob](flinkserver/src/main/scala/com/lightbend/modelserving/flink/wine/server/ModelServingKeyedJob.scala) for keyed version and [ModelServingFlatJob](flinkserver/src/main/scala/com/lightbend/modelserving/flink/wine/server/ModelServingFlatJob.scala) for partitioned version
+Finally the Akka Streams implementation itself, [AkkaModelServer](akkaserver/src/main/scala/com/lightbend/modelserving/akka/AkkaModelServer.scala) brings all the pieces together and provides the app you run. Running it will
+produce a [ServingResult](model/src/main/scala/com/lightbend/modelserving/model/ ServingResult.scala) that contains the result, the duration (execution time) and other information. The duration is a time from message submission to the point when a result can be used. So it includes message submission and Kafka time in addition to the actual model serving latency.
+
+There is one application in this project:
+
+* [AkkaModelServer.scala](client/src/main/scala/com/lightbend/modelserving/akka/AkkaModelServer.scala): Ingests the wine data stream and the model updates. Scores the wine records in memory.
+
+> **Note:** Recall that you'll need to run the `client` project `DataProvider` while running this app. Also, you can't run any other of the serving apps at the same time, because they are all part of the same Kafka Consumer Group and there is only one partition for the data. So, only the first app running will receive any data!
+
+To run `AkkaModelServer` in IntelliJ, just left click on the file and pick `run`. Other IDEs work similarly.
+
+If you are using SBT in a terminal, you'll need a new terminal running SBT to run `AkkaModelServer`, as the first terminal will be "busy" running `DataProvider`.
+
+Since there is only one app in the `akkaserver` project, using `akkaserver/run` won't prompt for an app to run:
+
+```
+sbt:model-serving-tutorial> akkaserver/run
+
+...
+Updated model: ModelToServe(winequalityDesisionTreeRegression,generated from SparkML,2,[B@11e6ac4d,null,wine)
+Model serving in 30 ms, with result 6.0 (model tensorflow saved model, data type wine)
+Updated model: ModelToServe(winequalityMultilayerPerceptron,generated from SparkML,2,[B@79be7f2a,null,wine)
+Model serving in 49 ms, with result 6.0 (model TensorFlow saved model, data type wine)
+...
+```
+
+The few lines shown indicate when new model parameters are read and when records are scored.
+
+For completeness, you can also run the app with the fully-qualified name, using `runMain`:
+
+```
+sbt:model-serving-tutorial> akkaserver/runMain com.lightbend.modelserving.akka.AkkaModelServer
+...
+```
+
+### Flink Implementation
+
+This implementation shows how to use Apache Flink's [low level joins](https://ci.apache.org/projects/flink/flink-docs-stable/dev/stream/operators/process_function.html) for implementing model serving leveraging the dynamically controlled stream pattern discussed previously.
+
+There are two implementations:
+
+* [ModelServingKeyedJob.scala](flinkserver/src/main/scala/com/lightbend/modelserving/flink/wine/server/ModelServingKeyedJob.scala) uses a key-based implementation, [DataProcessorKeyed.scala](flinkserver/src/main/scala/com/lightbend/modelserving/flink/keyed/DataProcessorKeyed.scala) based on Flink's [Processor Function](https://ci.apache.org/projects/flink/flink-docs-release-1.7/dev/stream/operators/process_function.html#low-level-joins).
+* [ModelServingFlatJob](flinkserver/src/main/scala/com/lightbend/modelserving/flink/wine/server/ModelServingFlatJob.scala) uses a partition-based implementation, [DataProcessorMap.scala](flinkserver/src/main/scala/com/lightbend/modelserving/flink/partitioned/DataProcessorMap.scala) based on Flink's [RichCoFlatMapFunction](https://www.da-platform.com/blog/bettercloud-dynamic-alerting-apache-flink).
+
+The choice of implementation depends on the load and the distribution of the data types. See this [Flink documentation on model serving](https://cwiki.apache.org/confluence/display/FLINK/FLIP-23+-+Model+Serving) for more details.
+
+As before, make sure you are running `DataProvider` and don't run any of the other serving applications.
+
+To run one of the model-serving implementations in an IDE, just right-click on the file or code and run it.
+
+If you are using SBT in a terminal, use the following command:
+
+```
+sbt:model-serving-tutorial> flinkserver/run
+
+Multiple main classes detected, select one to run:
+
+ [1] com.lightbend.modelserving.flink.wine.query.ModelStateQueryJob
+ [2] com.lightbend.modelserving.flink.wine.server.ModelServingFlatJob
+ [3] com.lightbend.modelserving.flink.wine.server.ModelServingKeyedJob
+
+Enter number:
+...
+```
+
+Try 2 or 3. (We'll discuss `ModelStateQueryJob` below.) You'll see log output similar to what we saw previously for the other servers.
+
+You can also use `runMain` as discussed before, for example:
+
+```
+sbt:model-serving-tutorial> flinkserver/runMain com.lightbend.modelserving.flink.wine.server.ModelServingKeyedJob
+...
+```
+
+Queryable State is implemented for `ModelServingKeyedJob` (but not for `ModelServingFlatJob`) by [ModelStateQueryJob.scala](com.lightbend.modelserving.flink.wine.query.ModelStateQueryJob). For this to work, `ModelStateQueryJob` needs to know the Flink job ID for the running `ModelServingKeyedJob` instance. By default, `ModelServingKeyedJob` writes this ID to a file, `./ModelServingKeyedJob.id`, which `ModelStateQueryJob` reads at startup. You can also override how `ModelStateQueryJob` gets the ID with several command line options (using yet another SBT window), as shown here if you pass the `--help` option:
+
+```bash
+sbt:model-serving-tutorial> flinkserver/runMain com.lightbend.modelserving.flink.wine.query.ModelStateQueryJob --help
+
+Usage: ModelStateQueryJob [-h|--help] [-f|--file id_file_path] [-i|--id id]
+Where:
+-h | --help               Show this help and exit
+-f | --file id_file_path  Read the ID from this file. Defaults to "./ModelServingKeyedJob.id"
+-i | --id id              Use this ID
+
+So, the default behavior is to read the ID from the default file.
+
+sbt:model-serving-tutorial>
+```
+
+With no options or using the `--id` or `--file` options, you'll see output like this:
+
+```text
+Using job ID: ...
+| Name                                               | Description                            | Since               | Average  | Min | Max |
+| -------------------------------------------------- | -------------------------------------- | ------------------- | -------- | --- | --- |
+| winequalityGeneralizedLinearRegressionGaussian     | generated from SparkML                 | 2019/01/28 15:01:09 |  0.26531 |   0 |   5 |
+| data/optimized_WineQuality                         | generated from TensorFlow              | 2019/01/28 15:01:16 |  6.62500 |   0 |  50 |
+| tensorflow saved model                             | generated from TensorFlow saved bundle | 2019/01/28 15:01:47 |  3.22222 |   0 |  27 |
+| ... |
+```
 
 ### Spark Structured Streaming implementation
 
