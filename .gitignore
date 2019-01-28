@@ -41,3 +41,4 @@ killrweather.yaml
 loaderinstall.yaml
 *.swp
 /cpt/
+ModelServingKeyedJob.id
