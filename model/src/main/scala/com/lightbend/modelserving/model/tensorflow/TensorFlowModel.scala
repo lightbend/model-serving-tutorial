@@ -24,7 +24,7 @@ import com.lightbend.model.modeldescriptor.ModelDescriptor
 import com.lightbend.modelserving.model.Model
 import org.tensorflow.{Graph, Session}
 
-// Abstract class for any Tensorflow (optimized export) model processing. It has to be extended by the user
+// Abstract class for any TensorFlow (optimized export) model processing. It has to be extended by the user
 // implement score method, based on his own model. Serializability here is required for Spark
 abstract class TensorFlowModel[RECORD,RESULT](inputStream : Array[Byte]) extends Model[RECORD,RESULT] with Serializable {
 
@@ -68,7 +68,7 @@ abstract class TensorFlowModel[RECORD,RESULT](inputStream : Array[Byte]) extends
   private def writeObject(output: ObjectOutputStream): Unit = {
     val start = System.currentTimeMillis()
     output.writeObject(bytes)
-    println(s"Tensorflow java serialization in ${System.currentTimeMillis() - start} ms")
+    println(s"TensorFlow java serialization in ${System.currentTimeMillis() - start} ms")
   }
 
   private def readObject(input: ObjectInputStream): Unit = {
@@ -78,13 +78,13 @@ abstract class TensorFlowModel[RECORD,RESULT](inputStream : Array[Byte]) extends
       graph = new Graph
       graph.importGraphDef(bytes)
       session = new Session(graph)
-      println(s"Tensorflow java deserialization in ${System.currentTimeMillis() - start} ms")
+      println(s"TensorFlow java deserialization in ${System.currentTimeMillis() - start} ms")
     }
     catch {
       case t: Throwable =>
         t.printStackTrace
-        println(s"Tensorflow java deserialization failed in ${System.currentTimeMillis() - start} ms")
-        println(s"Restored Tensorflow ${new String(bytes)}")
+        println(s"TensorFlow java deserialization failed in ${System.currentTimeMillis() - start} ms")
+        println(s"Restored TensorFlow ${new String(bytes)}")
     }
   }
 }

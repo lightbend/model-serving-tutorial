@@ -32,9 +32,9 @@ import org.tensorflow.framework.{MetaGraphDef, SavedModel, SignatureDef, TensorI
 import scala.collection.JavaConverters._
 
 
-// Abstract class for any Tensorflow (SavedModelBundle) model processing. It has to be extended by the user
+// Abstract class for any TensorFlow (SavedModelBundle) model processing. It has to be extended by the user
 // implement score method, based on his own model
-// This is a very simple implementation, assuming that the Tensorflow saved model bundle is local (constructor, get tags)
+// This is a very simple implementation, assuming that the TensorFlow saved model bundle is local (constructor, get tags)
 // The realistic implementation has to use some shared data storage, for example, S3, Minio, etc.
 
 abstract class TensorFlowBundleModel[RECORD,RESULT](inputStream : Array[Byte]) extends Model[RECORD,RESULT]  with Serializable {
@@ -95,7 +95,7 @@ abstract class TensorFlowBundleModel[RECORD,RESULT](inputStream : Array[Byte]) e
   private def writeObject(output: ObjectOutputStream): Unit = {
     val start = System.currentTimeMillis()
     output.writeObject(bytes)
-    println(s"Tensorflow java serialization in ${System.currentTimeMillis() - start} ms")
+    println(s"TensorFlow java serialization in ${System.currentTimeMillis() - start} ms")
   }
 
   private def readObject(input: ObjectInputStream): Unit = {
@@ -103,13 +103,13 @@ abstract class TensorFlowBundleModel[RECORD,RESULT](inputStream : Array[Byte]) e
     bytes = input.readObject().asInstanceOf[Array[Byte]]
     try{
       setup()
-      println(s"Tensorflow java deserialization in ${System.currentTimeMillis() - start} ms")
+      println(s"TensorFlow java deserialization in ${System.currentTimeMillis() - start} ms")
     }
     catch {
       case t: Throwable =>
         t.printStackTrace
-        println(s"Tensorflow java deserialization failed in ${System.currentTimeMillis() - start} ms")
-        println(s"Restored Tensorflow ${new String(bytes)}")
+        println(s"TensorFlow java deserialization failed in ${System.currentTimeMillis() - start} ms")
+        println(s"Restored TensorFlow ${new String(bytes)}")
     }
   }
 
