@@ -1,80 +1,97 @@
-# Implementing Model Serving - a Tutorial
+# Hands-on Machine Learning with Kafka-based Streaming Pipelines - a Tutorial
 
 [![Join the chat at https://gitter.im/lightbend-model-serving-tutorial/community](https://badges.gitter.im/lightbend-model-serving-tutorial.svg)](https://gitter.im/lightbend-model-serving-tutorial/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 > **NOTE:** This code has been tested only with Java 8 and Scala 2.11.12 and Scala 2.12.8 (the default setting). Any other versions of Java will not work. Other versions of Scala 2.11 and 2.12 may work.
 
-[Boris Lublinsky](mailto:boris.lublinsky@lightbend.com) and [Dean Wampler](mailto:dean.wampler@lightbend.com), [Lightbend](https://lightbend.com/fast-data-platform)
+[Boris Lublinsky](mailto:boris.lublinsky@lightbend.com) and [Dean Wampler](mailto:dean.wampler@lightbend.com), [Lightbend](https://lightbend.com/lightbend-platform)
 
 * [Strata Data Conference San Jose, Tuesday, March 6, 2019](https://conferences.oreilly.com/strata/strata-ca/public/schedule/detail/63983)
 * [Strata Data Conference London, Tuesday, May 22, 2019](https://conferences.oreilly.com/strata/strata-eu/public/schedule/detail/65420)
 
 ©Copyright 2018-2019, Lightbend, Inc. Apache 2.0 License. Please use as you see fit, but attribution is requested.
 
-This tutorial provides an introduction to Model Serving.
+This tutorial provides a hands-on introduction to serving machine learning models in the context of streaming data services written with [Apache Spark](http://spark.apache.org/), [Apache Flink](http://flink.apache.org/), and microservice tools like [Akka Streams](https://doc.akka.io/docs/akka/2.5/stream/). It discusses implementation options like [TensorFlow Serving](https://www.tensorflow.org/serving/), embedded ML libraries, and Kafka as the "data backplane" - the conduit between various services, sources, and sinks.
 
 See the companion presentation for the tutorial in the `presentation` folder:
 
-The core "use case" implemented is a stream processing application that also ingests updated parameters for a machine learning model and then uses the model to score the data. Several implementations of this use case are provided.
-They not only compare Akka Streams vs. Spark and Flink, but they also show how to support a few other common production requirements, such as managing the in-memory state of the application.
+The core "use case" implemented is a stream processing application that also ingests updated parameters for a machine learning model and then uses the model to score the data. Several implementations of this use case are provided, where we compare and contrast the use of Akka Streams, Spark, and Flink. We also show how to support a few common production requirements, such as managing the in-memory state of the application.
 
-First, we will describe how to build and run the applications. Then we will discuss their designs. For reference materials and more information, see the end of this README.
+First, we will describe how to build and run the applications. Then we will discuss their designs. For reference materials and more information, see the end of this README. This content will be useful when working through the exercises provided, e.g., the _Scaladocs_ for Akka Streams.
 
 ## Tutorial Setup
 
-> **Note:** If you are attending this tutorial at a conference, please follow the setup steps _ahead of time_. If you encounter problems, ask for help on the project's [Gitter room](https://gitter.im/kafka-with-akka-streams-kafka-streams-tutorial).
+> **Note:** If you are attending this tutorial at a conference, please follow the setup steps _ahead of time_. If you encounter problems, ask for help on the project's [Gitter room](https://gitter.im/lightbend-model-serving-tutorial/community).
 
 ### Install the Required Tools
 
-The Java JDK v8 is required. If not already installed, see the instructions [here](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html).
+The Java JDK v8 is required. If not already installed, see the instructions [here](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html). Newer versions of the JDK have not been tested.
 
-[SBT](https://www.scala-sbt.org/), the _de facto_ build tool for Scala is used to build the code, both the Scala and Java implementations. The SBT build files are configured to download all the required dependencies. Go [here](https://www.scala-sbt.org/download.html) for installation instructions.
+[SBT](https://www.scala-sbt.org/), the _de facto_ build tool for Scala is used to build the Scala code. You don't need to know much about SBT to use it for our purposes. The SBT build files are configured to download all the required dependencies. Go [here](https://www.scala-sbt.org/download.html) for installation instructions.
 
-We recommend using [IntelliJ IDEA](https://www.jetbrains.com/idea/) for managing and building the code, which can drive SBT. The free Community Edition is sufficient. However, using IntelliJ isn't required; any favorite IDE or editor environment will do; you'll just need to run SBT in a separate command window.
+We used [IntelliJ IDEA](https://www.jetbrains.com/idea/) for managing and building the code, which can drive SBT. The free Community Edition is sufficient. However, using IntelliJ isn't required. Any favorite IDE, such as Microsoft Visual Studio Code, or an editor environment will do, but you may need to run SBT in a separate command window.
 
-If you use IntelliJ IDEA or another IDE environment, also install the Scala plugin for the IDE. IntelliJ's Scala plugin includes support for SBT (ignore the SBT plugins that are available). Other IDEs might require a separate SBT plugin. Note that the tutorial uses Scala, 2.11.12.
+If you use IntelliJ IDEA or another IDE environment, also install the Scala plugin for the IDE. IntelliJ's Scala plugin includes support for SBT (ignore the SBT plugins that are available). Other IDEs might require a separate SBT plugin. Note that the tutorial uses Scala, 2.12.8.
 
-> **Note:** If you encounter class file or byte code errors when attempting to run SBT below, try removing any versions of Scala that are on your `PATH`. You can also try downloading the 2.12.4 version of Scala from [scala-lang.org](https://www.scala-lang.org) and use it as your Scala SDK for the project or in your IDE globally.
+> **Note:** If you encounter class file or byte code errors when attempting to run SBT below, try removing any versions of Scala that are on your `PATH`. You can also try downloading the 2.12.8 version of Scala from [scala-lang.org](https://www.scala-lang.org) and use it as your Scala SDK for the project or in your IDE globally.
 
 If you use IntelliJ, the quickest way to start is to create a new project from the GitHub repository:
 
 1. File > New > Project from Version Control > GitHub
 2. Log into your GitHub account
-3. Specify the URL https://github.com/lightbend/kafka-with-akka-streams-kafka-streams-tutorial
+3. Specify the URL https://github.com/lightbend/model-serving-tutorial
 4. When the window opens, you'll see a pop-up with a link asking to load the SBT project; do that
-5. Accept the defaults for SBT. Use JDK 1.8 if it's not shown as the default.
-6. Do one build using the SBT command line...
+5. Accept the defaults for SBT. Use JDK 1.8 if it's not shown as the default
+6. Do one build using the SBT command line, discussed next
 
-> **WARNING:** Unfortunately, the IntelliJ build doesn't properly build the `protobuf` project (protobuf), which is used for encoding and serializing data exchanged between services. So, you must do the following one-time, command-line build:
+> **WARNING:** Unfortunately, the IntelliJ build doesn't properly build the `protobuf` project, which is used for encoding and serializing data exchanged between services. So, you must do the following one-time, command-line build:
 
 1. Open an SBT window:
-    a. In IntelliJ, open the _sbt shell_ tool window (_View > Tool Windows > sbt shell_)
-    b. If not using IntelliJ, open a terminal/command window, change to the tutorial directory, run `sbt`.
-2. Type `package`, once `sbt` has finished loading
+  a. In IntelliJ, open the _sbt shell_ tool window (_View > Tool Windows > sbt shell_)
+  b. If using another IDE with integrated SBT support, invoke the SBT shell as appropriate
+  c. If using an editor, open a terminal/command window, change to the tutorial directory, run `sbt`
+2. Once `sbt` has finished loading, type `package`. (This runs the SBT _package_ task, which compiles the code and builds jar files.)
 3. It should end with `[success] Total time: ...` after ~30 seconds
-4. Now just use IntelliJ's _Build_ command as needed or triggered automatically. If not using IntelliJ, use `~package` in your terminal inside `sbt`.
+4. Rebuild after making code changes during the tutorial:
+  a. In IntelliJ use the _Build_ command as needed or configure it to trigger automatically when files change.
+  b. In another IDE use the corresponding build command it provides
+  c. If using an editor, use `~package` in your terminal at the `sbt` prompt. (The `~` tells SBT to watch for changed files and rerun the command given when changes are detected.)
 
 > **Note:** There is also an IntelliJ `sbt` tool window that's useful for browsing the project structure, including the defined _tasks_ (commands). You can double click a task to run it.
 
-If you don't have a GitHub account, just download the latest [release](https://github.com/lightbend/kafka-with-akka-streams-kafka-streams-tutorial/releases) and import the code as an SBT project into your IDE. In IntelliJ, use these steps:
+If you don't have a GitHub account, just download the latest [release](https://github.com/lightbend/model-serving-tutorial/releases) and import the code as an SBT project into your IDE.
+
+In IntelliJ, use these steps:
 
 1. _Import Project_
 2. Select the project root directory (i.e., the same as for this README)
 3. Select `sbt` as the project type
-4. Use the default settings for `sbt`. Use JDK 1.8 if it's not shown as the default.
+4. Use the default settings for `sbt`. Use JDK 1.8 if it's not shown as the default
 5. Profit!!
 
-## Supporting projects
+## SBT Projects
 
-The implementation contains 4 supporting projects, described below and data directory with all the data and models used
+The SBT build is organized into several projects under the `root` project. There are four projects that illustrate model-serving techniques: `akkaserver`, `flinkserver`, `sparkserver`, `tensorflowserver`. There are four supporting projects: `client`, `configuration`, `model`, `protobufs`. Finally, the `data` directory contains all the data and models used.
+
+### Supporting Projects
+
+The implementation contains the following supporting projects.
 
 ### Protobufs
 
-This is a supporting project defining 2 [Google Protobuf](https://developers.google.com/protocol-buffers/) Schemas - model and Data.
-Model is a generic schema allows to support a lot of different model implementations - we will use 2 throughout the code -
-[PMML](http://dmg.org/pmml/v4-3/GeneralStructure.html) and [Tensorflow](https://www.tensorflow.org/).
-For Tensorflow, there are 2 options to save model - [optimized](https://blog.metaflow.fr/tensorflow-how-to-freeze-a-model-and-serve-it-with-a-python-api-d4f3596b3adc) and [Saved Model Bundle](https://www.tensorflow.org/api_docs/java/reference/org/tensorflow/SavedModelBundle) (the one used by tensorflow bundle).
-You can find the code for both, but we will only used optimized in our examples.
+This is a supporting project defining two [Google Protobuf](https://developers.google.com/protocol-buffers/) schemas - model and Data.
+
+Model is a generic schema that supports many different model implementations. We will use two of them throughout the code:
+
+* [PMML](http://dmg.org/pmml/v4-3/GeneralStructure.html)
+* [Tensorflow](https://www.tensorflow.org/).
+
+For Tensorflow, there are two format options for exported (saved) models:
+
+* [Optimized](https://blog.metaflow.fr/tensorflow-how-to-freeze-a-model-and-serve-it-with-a-python-api-d4f3596b3adc)
+* [Saved Model Bundle](https://www.tensorflow.org/api_docs/java/reference/org/tensorflow/SavedModelBundle) (the one used by TensorFlow _bundle_).
+
+You can find the code for both, but we will only used optimized models in our examples.
 
 ### Client
 
@@ -182,7 +199,41 @@ This implementation shows how to use Spark Structured Streaming for implementing
 The first implementation [SparkStructuredModelServer](sparkserver/src/main/scala/com/lightbend/modelserving/spark/server/SparkStructuredModelServer.scala) is leveraging recommended by Spark streaming approach - streams [union](https://spark.apache.org/docs/latest/streaming-programming-guide.html) and [mapGroupsWithState](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#arbitrary-stateful-operations).
 This implementation works, but requires usage of Spark mini batching, which is sub optimal for model serving implementations.
 
-A diffirent implementation - [SparkStructuredStateModelServer](sparkserver/src/main/scala/com/lightbend/modelserving/spark/server/SparkStructuredStateModelServer.scala) (suggested by [Gerard Maas](https://www.linkedin.com/in/gerardmaas/?originalSubdomain=be)) avoids this drawback by
+A different implementation - [SparkStructuredStateModelServer](sparkserver/src/main/scala/com/lightbend/modelserving/spark/server/SparkStructuredStateModelServer.scala) (suggested by [Gerard Maas](https://www.linkedin.com/in/gerardmaas/?originalSubdomain=be)) avoids this drawback by
 explicitely splitting streams and using model stream processing (based on [Spark Streaming](https://spark.apache.org/docs/latest/streaming-programming-guide.html)) as an external loop and data processing
 (based on [Spark Structured Streaming](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html)) as an inner loop.
 This approach allows to significantly simplify implementation and use Spark's [Low Latency Continious Processing](https://databricks.com/blog/2018/03/20/low-latency-continuous-processing-mode-in-structured-streaming-in-apache-spark-2-3-0.html), which allows for real time model serving.
+
+## Other Notes
+
+This tutorial evolved from an earlier tutorial written by Boris and Dean called [kafka-with-akka-streams-kafka-streams-tutorial](https://github.com/lightbend/kafka-with-akka-streams-kafka-streams-tutorial). It provides a more general introduction to writing streaming data systems using Akka Streams and Kafka Streams, also with Kafka as the "data backplane". The sample application is also a model-serving example.
+
+## References
+
+### Scala
+
+* [Scala language web site](https://www.scala-lang.org/)
+* [Scala library docs ("Scaladocs")](https://www.scala-lang.org/api/current/index.html)
+
+### Kafka
+
+* [Kafka](https://kafka.apache.org/)
+* [Kafka Documentation](https://kafka.apache.org/documentation/)
+
+### Akka and Akka Streams
+
+* [Akka](https://akka.io)
+* [Akka Documentation](https://akka.io/docs)
+* Akka Streams (Scala):
+    * [Reference](https://doc.akka.io/docs/akka/current/stream/index.html?language=scala)
+    * [Scaladocs](https://doc.akka.io/api/akka/current/akka/stream/index.html)
+* Akka Streams (Java):
+    * [Reference](https://doc.akka.io/docs/akka/current/stream/index.html?language=java)
+    * [Javadocs](https://doc.akka.io/japi/akka/current/index.html?akka/stream/package-summary.html)
+* Miscellaneous:
+    * [Colin Breck's blog](http://blog.colinbreck.com/), such as his two-part series on integrating Akka Streams and Akka Actors: [Part I](http://blog.colinbreck.com/integrating-akka-streams-and-akka-actors-part-i/), [Part II](http://blog.colinbreck.com/integrating-akka-streams-and-akka-actors-part-ii/)
+    * [Akka Team Blog](https://akka.io/blog/)
+
+### For More Information
+
+Lightbend Platform is an integrated and commercially supported platform for streaming data and microservices, including Apache Kafka, Apache Spark, Apache Flink, Akka Streams, and Kafka Streams, plus developer tools and production monitoring and management tools. Please visit https://www.lightbend.com/lightbend-platform for more information.
