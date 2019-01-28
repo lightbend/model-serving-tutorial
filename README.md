@@ -1,8 +1,8 @@
 # Implementing Model Serving - a Tutorial
 
-[![Join the chat at https://gitter.im/kafka-with-akka-streams-kafka-streams-tutorial](https://badges.gitter.im/kafka-with-akka-streams-kafka-streams-tutorial.svg)](https://gitter.im/kafka-with-akka-streams-kafka-streams-tutorial?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/lightbend-model-serving-tutorial/community](https://badges.gitter.im/lightbend-model-serving-tutorial.svg)](https://gitter.im/lightbend-model-serving-tutorial/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-> **NOTE:** This code has been tested only with Java 8 and Scala 2.11.12. Any other versions will not work (scala 2.11.x will probably do fine)
+> **NOTE:** This code has been tested only with Java 8 and Scala 2.11.12 and Scala 2.12.8 (the default setting). Any other versions of Java will not work. Other versions of Scala 2.11 and 2.12 may work.
 
 [Boris Lublinsky](mailto:boris.lublinsky@lightbend.com) and [Dean Wampler](mailto:dean.wampler@lightbend.com), [Lightbend](https://lightbend.com/fast-data-platform)
 
