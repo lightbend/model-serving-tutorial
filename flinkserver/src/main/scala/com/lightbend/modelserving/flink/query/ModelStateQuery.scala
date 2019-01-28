@@ -55,11 +55,11 @@ object ModelStateQuery {
     val keyType = BasicTypeInfo.STRING_TYPE_INFO
 
     // Sample output line, used to compute the following format string:
-    // | winequalityGeneralizedLinearRegressionGaussian | generated from SparkML | 2019/01/28 13:01:61 | 0.3157894736842105 |  0 | 4 |
-    val format       = "| %-50s | %-25s | %-19s | %8.5f | %3d | %3d |\n"
-    val headerFormat = "| %-50s | %-25s | %-19s | %-8s | %-3s | %-3s |\n"
+    // | winequalityGeneralizedLinearRegressionGaussian | generated from TensorFlow saved bundle | 2019/01/28 13:01:61 | 0.3157894736842105 |  0 | 4 |
+    val format       = "| %-50s | %-38s | %-19s | %8.5f | %3d | %3d |\n"
+    val headerFormat = "| %-50s | %-38s | %-19s | %-8s | %-3s | %-3s |\n"
     printf(headerFormat, "Name", "Description", "Since", "Average", "Min", "Max")
-    printf(headerFormat, "-" * 50, "-" * 25, "-" * 19, "-" * 8, "-" * 3, "-" * 3)
+    printf(headerFormat, "-" * 50, "-" * 38, "-" * 19, "-" * 8, "-" * 3, "-" * 3)
     while(true) {
       for (key <- keys) {
         // For every key
