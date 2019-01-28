@@ -28,6 +28,7 @@ import com.lightbend.modelserving.flink.typeschema.ByteArraySchema
 import com.lightbend.modelserving.flink.wine.BadDataHandler
 import com.lightbend.modelserving.model.ModelToServe
 import com.lightbend.modelserving.winemodel.{DataRecord, WineFactoryResolver}
+import org.apache.flink.api.common.JobID
 import org.apache.flink.configuration.{Configuration, JobManagerOptions, QueryableStateOptions, TaskManagerOptions}
 import org.apache.flink.runtime.concurrent.Executors
 import org.apache.flink.runtime.highavailability.HighAvailabilityServicesUtils
@@ -56,12 +57,21 @@ object ModelServingKeyedJob {
 
   import ModelServingConfiguration._
 
+  val defaultIDFileName = "./ModelServingKeyedJob.id"
+
+  /**
+   * Entry point. It takes one optional argument, a file path to which the job ID
+   * is written, so that the {@link com.lightbend.modelserving.flink.wine.query.ModelStateQueryJob}
+   * can query the job. The default path is `./ModelServingKeyedJob.id`.
+   * The ID is also written to stderr.
+   */
   def main(args: Array[String]): Unit = {
-    executeServer()
+    val idFileName = if (args.length > 0) args(0) else defaultIDFileName
+    executeServer(idFileName)
   }
 
-  // Execute on the local Flink server - to test queariable state
-  def executeServer() : Unit = {
+  // Execute on the local Flink server - to test queryable state
+  def executeServer(idFileName: String) : Unit = {
 
     // We use a mini cluster here for sake of simplicity, because I don't want
     // to require a Flink installation to run this demo. Everything should be
@@ -102,7 +112,7 @@ object ModelServingKeyedJob {
       val jobGraph = env.getStreamGraph.getJobGraph()
       // Submit to the server and wait for completion
       val result = flinkCluster.submitJobDetached(jobGraph)
-      println(s"Started job with ID : ${result.getJobID}")
+      writeJobId(idFileName, result.getJobID)
       Thread.sleep(Long.MaxValue)
     } catch {
       case e: Exception => e.printStackTrace()
@@ -165,5 +175,17 @@ object ModelServingKeyedJob {
       .connect(models)
       .process(DataProcessorKeyed[WineRecord, Double]())
       .map(result => println(s"Model serving in ${System.currentTimeMillis() - result.duration} ms, with result ${result.result} (model ${result.name}, data type ${result.dataType})"))
+  }
+
+  import java.nio.file.{Files, Paths}
+  import java.nio.file.StandardOpenOption.{WRITE, TRUNCATE_EXISTING}
+  import java.nio.charset.StandardCharsets.UTF_8
+  import scala.collection.JavaConverters._
+
+  protected def writeJobId(idFileName: String, jobID: JobID): Unit = {
+    val msg = s"Started job with ID : ${jobID}"
+    println(msg)
+    Console.err.println(msg)
+    Files.write(Paths.get(idFileName), asJavaIterable(Seq(jobID.toString)), UTF_8, WRITE, TRUNCATE_EXISTING);
   }
 }
