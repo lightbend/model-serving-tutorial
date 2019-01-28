@@ -45,7 +45,7 @@ object Dependencies {
 
   val kryo                  = "com.esotericsoftware.kryo" % "kryo"                              % kryoVersion
 
-  val reactiveKafka         = "com.typesafe.akka"       %% "akka-stream-kafka"                  % alpakkaKafkaVersion
+  val alpakkaKafka          = "com.typesafe.akka"       %% "akka-stream-kafka"                  % alpakkaKafkaVersion
 
   val akkaStreamTyped       = "com.typesafe.akka"       %% "akka-stream-typed"                  % akkaVersion
   val akkaHttp              = "com.typesafe.akka"       %% "akka-http"                          % akkaHttpVersion
@@ -54,9 +54,12 @@ object Dependencies {
 
   val gson                  = "com.google.code.gson"    % "gson"                                % gsonVersion
 
+  val slf4jlog4j            = "org.slf4j"               % "slf4j-log4j12"                       % slf4jlog4jVersion
+
   val modelsDependencies = Seq(PMMLEvaluator, PMMLExtensions, tensorFlow, tensorFlowProto)
-  val flinkDependencies = Seq(flinkScala, flinkStreaming, flinkKafka, flinkQueryableRuntime, flinkQueryableClient, joda)
-  val sparkDependencies = Seq(sparkcore, sparkstreaming, sparkkafka, sparkSQL, sparkSQLkafka)
-  val akkaServerDependencies = Seq(reactiveKafka, akkaStreamTyped, akkatyped, akkaHttp, akkaHttpJsonJackson, reactiveKafka)
+  val clientDependencies = Seq(kafka, curator, commonIO, slf4jlog4j)
+  val flinkDependencies = Seq(flinkScala, flinkStreaming, flinkKafka, flinkQueryableRuntime, flinkQueryableClient, joda, slf4jlog4j)
+  val sparkDependencies = Seq(sparkcore, sparkstreaming, sparkkafka, sparkSQL, sparkSQLkafka, slf4jlog4j)
+  val akkaServerDependencies = Seq(alpakkaKafka, akkaStreamTyped, akkatyped, akkaHttp, akkaHttpJsonJackson, slf4jlog4j)
 
 }

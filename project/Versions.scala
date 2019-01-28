@@ -37,4 +37,6 @@ object Versions {
   val akkaHttpJsonVersion   = "1.22.0"
 
   val gsonVersion           = "2.8.5"
+
+  val slf4jlog4jVersion     = "1.7.25"
 }
