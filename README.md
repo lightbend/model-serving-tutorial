@@ -69,6 +69,15 @@ In IntelliJ, use these steps:
 4. Use the default settings for `sbt`. Use JDK 1.8 if it's not shown as the default
 5. Profit!!
 
+## Clean Up, When You're Done
+
+The tutorial writes various files that you might want to delete once you're finished. The following `bash` commands (or similar Windows commands) will do the trick:
+
+```bash
+sbt clean
+rm -rf tmp checkpoints output
+```
+
 ## SBT Projects
 
 The SBT build is organized into several projects under the `root` project. There are four projects that illustrate model-serving techniques: `akkaserver`, `flinkserver`, `sparkserver`, `tensorflowserver`. There are four supporting projects: `client`, `configuration`, `model`, `protobufs`. Finally, the `data` directory contains all the data and models used. A data set for wine is used.

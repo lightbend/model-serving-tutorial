@@ -42,3 +42,5 @@ loaderinstall.yaml
 *.swp
 /cpt/
 ModelServingKeyedJob.id
+checkpoint
+output
