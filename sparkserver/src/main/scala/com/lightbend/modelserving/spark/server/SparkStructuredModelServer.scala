@@ -19,7 +19,7 @@
 package com.lightbend.modelserving.spark.server
 
 /**
-  * Implementation of Model serving using Spark Structured server.
+  * Implementation of Model serving using Spark Structured Streaming server.
   */
 
 import com.lightbend.modelserving.configuration.ModelServingConfiguration
@@ -32,7 +32,6 @@ import org.apache.spark.sql.streaming.{GroupState, GroupStateTimeout, Trigger}
 import org.apache.spark.sql.{Encoders, SparkSession}
 
 import scala.collection.mutable.ListBuffer
-
 
 object SparkStructuredModelServer {
 
@@ -47,7 +46,7 @@ object SparkStructuredModelServer {
     // Create context
     val sparkSession = SparkSession.builder
       .appName("SparkModelServer")
-      .master("local")
+      .master("local")  // TODO: don't hard code here
       .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .config("spark.kryo.registrator", "com.lightbend.modelserving.spark.ModelStateRegistrator")
       .config("spark.sql.streaming.checkpointLocation", CHECKPOINT_DIR)
@@ -56,13 +55,13 @@ object SparkStructuredModelServer {
     sparkSession.sparkContext.setLogLevel("ERROR")
     import sparkSession.implicits._
 
-    // Set modelToServe
+    // Set the model to serve
     ModelToServe.setResolver(WineFactoryResolver)
     ModelStateSerializerKryo.setResolver(WineFactoryResolver)
 
-    // Message parsing
-    // In order to be able to uninon both streams we are using here combined format
-    sparkSession.udf.register("deserializeData", (data: Array[Byte]) => DataWithModel.dataFromByteArrayStructured(data))
+    // Message parsing:
+    // In order to be able to uninon both streams we are using a combined format
+    sparkSession.udf.register("deserializeData",  (data: Array[Byte]) => DataWithModel.dataFromByteArrayStructured(data))
     sparkSession.udf.register("deserializeModel", (data: Array[Byte]) => DataWithModel.modelFromByteArrayStructured(data))
 
     // Create data stream
@@ -95,8 +94,8 @@ object SparkStructuredModelServer {
       .select("data.dataType", "data.data", "data.model")
       .as[DataWithModel]
 
-    // Order matters here - unioned stream is appended to the end. So in this case, all the model records will
-    // be processed first and data records after them
+    // Order matters here - the data stream is appended to the end so that all the model records will
+    // be processed first and data records after them.
     val datamodelstream = modelstream.union(datastream)
 
     // Actual model serving
@@ -110,11 +109,11 @@ object SparkStructuredModelServer {
 
     servingresultsstream.writeStream
       .outputMode("update")
-      .format("console")
-      // This what would of implement continuous processing, but it does not work due to the error
+      .format("console").option("truncate", false).option("numRows", 10) // 10 is the default
+      // Ideally, we would use continuous processing here, but it does not work due to the error
       // Exception in thread "main" org.apache.spark.sql.AnalysisException: Continuous processing does not support Union operations.;;
       //      .trigger(Trigger.Continuous("1 second"))
-      // Instead using processingTime trigger with one seconds micro-batch interval
+      // Instead, we use processingTime trigger with one-second micro-batch interval
       .trigger(Trigger.ProcessingTime("1 second"))
       .start
 
