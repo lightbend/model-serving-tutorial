@@ -16,11 +16,12 @@
  *
  */
 
-package com.lightbenf.modelserving.client
+package com.lightbend.modelserving.client.client
 
+import com.lightbend.modelserving.client.RecordProcessorTrait
 import org.apache.kafka.clients.consumer.ConsumerRecord
 
-trait RecordProcessorTrait[K, V] {
-
-  def processRecord(record: ConsumerRecord[K, V]): Unit
+class RecordProcessor extends RecordProcessorTrait[Array[Byte], Array[Byte]] {
+  override def processRecord(record: ConsumerRecord[Array[Byte], Array[Byte]]): Unit =
+    println("Get Message")
 }

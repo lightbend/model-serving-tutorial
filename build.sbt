@@ -20,19 +20,19 @@ name := "model-serving-tutorial"
 
 version := "0.1"
 
-scalaVersion in ThisBuild := "2.11.12"
+scalaVersion in ThisBuild := "2.12.8" // "2.11.12"
 
 lazy val protobufs = (project in file("./protobufs"))
   .settings(
     PB.targets in Compile := Seq(
       scalapb.gen() -> (sourceManaged in Compile).value
-    )  
+    )
   )
 
 lazy val configuration = (project in file("./configuration"))
 
 lazy val client = (project in file("./client"))
-  .settings(libraryDependencies ++= Seq(Dependencies.kafka, Dependencies.curator) ++ Seq(Dependencies.commonIO))
+  .settings(libraryDependencies ++= Dependencies.clientDependencies)
   .dependsOn(protobufs, configuration)
 
 lazy val model = (project in file("./model"))

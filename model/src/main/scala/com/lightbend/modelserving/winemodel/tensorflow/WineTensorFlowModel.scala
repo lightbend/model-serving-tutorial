@@ -24,7 +24,7 @@ import com.lightbend.modelserving.model.{Model, ModelFactory}
 import com.lightbend.modelserving.model.ModelToServe
 import org.tensorflow.Tensor
 
-// Tensorflow model implementation for wine data
+// TensorFlow model implementation for wine data
 class WineTensorFlowModel(inputStream : Array[Byte]) extends TensorFlowModel[WineRecord, Double](inputStream) {
 
   import WineTensorFlowModel._

@@ -16,7 +16,7 @@
  *
  */
 
-package com.lightbenf.modelserving.client.client
+package com.lightbend.modelserving.client.client
 
 import java.io.{ByteArrayOutputStream, File}
 import java.nio.file.{Files, Paths}
@@ -24,7 +24,7 @@ import java.nio.file.{Files, Paths}
 import com.google.protobuf.ByteString
 import com.lightbend.model.modeldescriptor.ModelDescriptor
 import com.lightbend.model.winerecord.WineRecord
-import com.lightbenf.modelserving.client.{KafkaLocalServer, MessageSender}
+import com.lightbend.modelserving.client.{KafkaLocalServer, MessageSender}
 import com.lightbend.modelserving.configuration.ModelServingConfiguration
 
 import scala.concurrent.ExecutionContext.Implicits.global

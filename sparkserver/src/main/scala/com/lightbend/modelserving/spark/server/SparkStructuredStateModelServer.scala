@@ -34,7 +34,8 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
 import scala.collection._
 
 /**
-  * Implementation of Model serving using Spark Structured server with real time support.
+  * Implementation of Model serving using Spark Structured Streaming server with near-real time support,
+  * using Spark's "continuous processing" engine.
   */
 
 object SparkStructuredStateModelServer {
@@ -48,7 +49,7 @@ object SparkStructuredStateModelServer {
     // Create context
     val sparkSession = SparkSession.builder
       .appName("SparkModelServer")
-      .master("local[3]")
+      .master("local[3]")  // TODO: don't hard code here
       .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .config("spark.kryo.registrator", "com.lightbend.modelserving.spark.ModelStateRegistrator")
       .config("spark.sql.streaming.checkpointLocation", CHECKPOINT_DIR)
@@ -100,7 +101,8 @@ object SparkStructuredStateModelServer {
       }).as[ServingResult[Double]]
 
     var dataQuery = datastream
-      .writeStream.outputMode("update").format("console")
+      .writeStream.outputMode("update")
+      .format("console").option("truncate", false).option("numRows", 10) // 10 is the default
       .trigger(Trigger.Continuous("5 second"))
       .start
 
@@ -109,12 +111,18 @@ object SparkStructuredStateModelServer {
     val modelsStream = KafkaUtils.createDirectStream[Array[Byte], Array[Byte]](ssc,PreferConsistent,
       Subscribe[Array[Byte], Array[Byte]](Set(MODELS_TOPIC),kafkaParams))
 
+    // Exercise:
+    // We use the older DStream API next, for it's flexibility. An alternative is
+    // to use the Structured Streaming idiom `streamingDataset.writeStream.foreach {...}`.
+    // Try rewriting the following logic using that approach, as described here:
+    // https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#using-foreach-and-foreachbatch
+
     modelsStream.foreachRDD( rdd =>
       if (!rdd.isEmpty()) {
         val models = rdd.map(_.value).collect
           .map(ModelToServe.fromByteArray(_)).filter(_.isSuccess).map(_.get)
 
-        // Stop currently running data stream
+        // Stop the currently running data stream
         println("Stopping data query")
         dataQuery.stop
 
@@ -138,10 +146,11 @@ object SparkStructuredStateModelServer {
           currentModels(name) = value
         }}
 
-        // restatrt data stream
+        // restart the data stream
         println("Starting data query")
         dataQuery = datastream
-          .writeStream.outputMode("update").format("console")
+          .writeStream.outputMode("update")
+          .format("console").option("truncate", false).option("numRows", 10) // 10 is the default
           .trigger(Trigger.Continuous("5 second"))
           .start
       }

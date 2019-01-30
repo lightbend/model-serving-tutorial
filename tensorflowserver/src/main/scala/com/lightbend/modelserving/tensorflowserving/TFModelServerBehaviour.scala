@@ -33,7 +33,7 @@ import com.lightbend.modelserving.model.{ModelToServeStats, ServingResult}
 
 class TFModelServerBehaviour(context: ActorContext[TFModelServerActor]) extends AbstractBehavior[TFModelServerActor] {
 
-  var currentState = new ModelToServeStats("Tensorflow Model Serving",  "Tensorflow Model Serving")
+  var currentState = new ModelToServeStats("TensorFlow Model Serving",  "TensorFlow Model Serving")
   val gson = new Gson
 
   println(s"Creating a new Model Server")
@@ -82,7 +82,7 @@ class TFModelServerBehaviour(context: ActorContext[TFModelServerActor]) extends 
                 // Update state
                 currentState = currentState.incrementUsage(System.currentTimeMillis() - start)
                 // result
-                record.reply ! Some(ServingResult("Tensorflow Model Serving", "wine", record.record.ts, quality))
+                record.reply ! Some(ServingResult("TensorFlow Model Serving", "wine", record.record.ts, quality))
               })
             case Failure(_)   => sys.error("something wrong")
               record.reply ! None

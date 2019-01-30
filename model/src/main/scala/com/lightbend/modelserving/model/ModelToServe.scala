@@ -117,7 +117,3 @@ case class ModelToServeStats(name: String = "", description: String = "",
     this
   }
 }
-
-// Model serving result definition
-// Ideally result should be AnyVal, but due to the fact that Spark structured streaming does not support it, we are using Double here
-case class ServingResult[RESULT](name : String, dataType : String = "", duration : Long = 0, result: RESULT = null.asInstanceOf[RESULT])
