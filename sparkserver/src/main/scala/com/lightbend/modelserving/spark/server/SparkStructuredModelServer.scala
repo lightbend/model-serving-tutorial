@@ -28,10 +28,12 @@ import com.lightbend.modelserving.spark.{DataWithModel, ModelState, ModelStateSe
 import com.lightbend.modelserving.winemodel.WineFactoryResolver
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.streaming.{GroupState, GroupStateTimeout, Trigger}
+import org.apache.spark.sql.streaming.{GroupState, GroupStateTimeout, StreamingQueryListener, Trigger}
 import org.apache.spark.sql.{Encoders, SparkSession}
 
 import scala.collection.mutable.ListBuffer
+
+import scala.collection.JavaConverters._
 
 object SparkStructuredModelServer {
 
@@ -63,6 +65,24 @@ object SparkStructuredModelServer {
     // In order to be able to uninon both streams we are using a combined format
     sparkSession.udf.register("deserializeData",  (data: Array[Byte]) => DataWithModel.dataFromByteArrayStructured(data))
     sparkSession.udf.register("deserializeModel", (data: Array[Byte]) => DataWithModel.modelFromByteArrayStructured(data))
+
+    // Create query listener
+    val queryListener = new StreamingQueryListener {
+      import org.apache.spark.sql.streaming.StreamingQueryListener._
+      def onQueryTerminated(event: QueryTerminatedEvent): Unit = {}
+      def onQueryStarted(event: QueryStartedEvent): Unit = {}
+      def onQueryProgress(event: QueryProgressEvent): Unit = {
+        println(s"Query progress  batch ${event.progress.batchId} at ${event.progress.timestamp}")
+        event.progress.durationMs.asScala.toList.foreach(duration => println(s"${duration._1} - ${duration._2}"))
+        event.progress.sources.foreach(source =>
+          println(s"Source ${source.description}, start offset ${source.startOffset}, end offset ${source.endOffset}, " +
+            s"input rows ${source.numInputRows}, rows per second ${source.processedRowsPerSecond}")
+        )
+      }
+    }
+
+    // Attach query listener
+    sparkSession.streams.addListener(queryListener)
 
     // Create data stream
     val datastream = sparkSession
