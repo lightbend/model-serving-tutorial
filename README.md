@@ -145,6 +145,8 @@ The `model` project incorporates the basic model and data operations. The implem
 
 ## Using External Services for Model Serving
 
+> **Note:** Exercises are suggested as code comments throughout the model serving SBT projects. Search for `// Exercise:` to find them.
+
 One way to serve models in a streaming pipeline is to use an external service to which you delegate scoring. Here we will show how to use _TensorFlow Serving_.
 
 Alternatively, other options that we won't investigate here include the following:
@@ -246,6 +248,8 @@ sbt:model-serving-tutorial> tensorflowserver/runMain com.lightbend.modelserving.
 
 ## Using Dynamically Controlled Streams for Model Serving
 
+> **Note:** Exercises are suggested as code comments throughout the model serving SBT projects. Search for `// Exercise:` to find them.
+
 _Dynamically Controlled Streams_ is a general pattern where the behavior of the stream processing in changed at runtime through some signaling mechanism. In this case, we change the behavior by updating the model that gets served. The model is effectively the state of the stream. Hence, such an implementation requires stateful stream processing for the main data stream with the state being updatable by a second stream, which we'll call the _state update stream_. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
 
 The following image shows the structure:
@@ -271,6 +275,8 @@ Additionally we implement the [Queryable State Pattern](https://kafka.apache.org
 
 Finally the Akka Streams implementation itself, [AkkaModelServer](akkaserver/src/main/scala/com/lightbend/modelserving/akka/AkkaModelServer.scala) brings all the pieces together and provides the app you run. Running it will
 produce a [ServingResult](model/src/main/scala/com/lightbend/modelserving/model/ ServingResult.scala) that contains the result, the duration (execution time) and other information. The duration is a time from message submission to the point when a result can be used. So it includes message submission and Kafka time in addition to the actual model serving latency.
+
+> **Note:** Because the duration is computed with the message submission time, when one of the model server apps is started and it begins processing messages that have been in the Kafka data topic for a while, the duration times computed will be very large. As the app catches up with the latest messages, these times will converge to a lower limit.
 
 There is one application in this project:
 
@@ -336,6 +342,11 @@ Enter number:
 
 Try 2 or 3. (We'll discuss `ModelStateQueryJob` below.) You'll see log output similar to what we saw previously for the other servers.
 
+> **Notes:**
+>
+> 1. `ModelServingKeyedJob` also writes the results to a file: `./output/flink-keyed.txt`.
+> 2. How do the duration times vary with different model types?
+
 You can also use `runMain` as discussed before, for example:
 
 ```
@@ -373,21 +384,47 @@ Using job ID: ...
 
 ### Spark Structured Streaming implementation
 
-This implementation shows how to use Spark Structured Streaming for implementing model serving leveraging dynamically controlled stream pattern.
+This implementation shows how to use [Spark Structured Streaming](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html) to implement model serving, also leveraging the dynamically controlled stream pattern discussed previously. Two implementations are provided:
 
-The first implementation [SparkStructuredModelServer](sparkserver/src/main/scala/com/lightbend/modelserving/spark/server/SparkStructuredModelServer.scala) is leveraging recommended by Spark streaming approach - streams [union](https://spark.apache.org/docs/latest/streaming-programming-guide.html) and [mapGroupsWithState](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#arbitrary-stateful-operations).
-This implementation works, but requires usage of Spark mini batching, which is sub optimal for model serving implementations.
+* [SparkStructuredModelServer.scala](sparkserver/src/main/scala/com/lightbend/modelserving/spark/server/SparkStructuredModelServer.scala) uses _unions_ (suggested by the older [Spark Streaming documentation](https://spark.apache.org/docs/latest/streaming-programming-guide.html)) to join the data and model streams. Then it uses [`mapGroupsWithState`](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#arbitrary-stateful-operations) to score the data in the combined stream. This approach requires usage of Spark mini-batching, which is sub optimal for model serving due to the higher latency required for mini-batches.
+* [SparkStructuredStateModelServer](sparkserver/src/main/scala/com/lightbend/modelserving/spark/server/SparkStructuredStateModelServer.scala) (suggested by our Lightbend colleague [Gerard Maas](https://www.linkedin.com/in/gerardmaas/)) avoids this drawback by keeping the data and model streams separate, allowing us to use Spark's [Low Latency Continuous Processing](https://databricks.com/blog/2018/03/20/low-latency-continuous-processing-mode-in-structured-streaming-in-apache-spark-2-3-0.html), which enables real-time model serving. The model stream is processed using the older [Spark Streaming](https://spark.apache.org/docs/latest/streaming-programming-guide.html), RDD-based `DStream` API, as it provides some extra programming flexibility that we need (but see the embedded exercise). The data stream is processed with the newer [Spark Structured Streaming](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html) `Dataset` API.
 
-A different implementation - [SparkStructuredStateModelServer](sparkserver/src/main/scala/com/lightbend/modelserving/spark/server/SparkStructuredStateModelServer.scala) (suggested by [Gerard Maas](https://www.linkedin.com/in/gerardmaas/?originalSubdomain=be)) avoids this drawback by
-explicitely splitting streams and using model stream processing (based on [Spark Streaming](https://spark.apache.org/docs/latest/streaming-programming-guide.html)) as an external loop and data processing
-(based on [Spark Structured Streaming](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html)) as an inner loop.
-This approach allows to significantly simplify implementation and use Spark's [Low Latency Continious Processing](https://databricks.com/blog/2018/03/20/low-latency-continuous-processing-mode-in-structured-streaming-in-apache-spark-2-3-0.html), which allows for real time model serving.
+The second approach offers both lower-latency scoring and a significantly simpler implementation.
 
-## Other Notes
+As before, make sure you are running `DataProvider` and don't run any of the other serving applications.
 
-This tutorial evolved from an earlier tutorial written by Boris and Dean called [kafka-with-akka-streams-kafka-streams-tutorial](https://github.com/lightbend/kafka-with-akka-streams-kafka-streams-tutorial). It provides a more general introduction to writing streaming data systems using Akka Streams and Kafka Streams, also with Kafka as the "data backplane". The sample application is also a model-serving example.
+To run one of the model-serving implementations in an IDE, just right-click on the file or code and run it.
+
+If you are using SBT in a terminal, use the following command:
+
+```
+sbt:model-serving-tutorial> sparkserver/run
+
+Multiple main classes detected, select one to run:
+
+ [1] com.lightbend.modelserving.spark.server.SparkStructuredModelServer
+ [2] com.lightbend.modelserving.spark.server.SparkStructuredStateModelServer
+
+Enter number:
+...
+```
+
+> **Notes:**
+>
+> 1. While either job is running, open and browse the driver's web console: http://localhost:4040.
+> 2. After each of the apps have caught up to the latest messages (see note above), how do the duration times compare for the two apps?
+> 3. How do the duration times compare with different model types?
+
+You can also use `runMain` as discussed before, for example:
+
+```
+sbt:model-serving-tutorial> sparkserver/runMain com.lightbend.modelserving.spark.server.SparkStructuredStateModelServer
+...
+```
 
 ## References
+
+Our previous tutorial, [github.com/lightbend/kafka-with-akka-streams-kafka-streams-tutorial](https://github.com/lightbend/kafka-with-akka-streams-kafka-streams-tutorial), provides a more general introduction to writing streaming data systems using Akka Streams and Kafka Streams, also with Kafka as the "data backplane". The sample application is also a model-serving example.
 
 ### Scala
 
@@ -398,6 +435,25 @@ This tutorial evolved from an earlier tutorial written by Boris and Dean called 
 
 * [Kafka](https://kafka.apache.org/)
 * [Kafka Documentation](https://kafka.apache.org/documentation/)
+
+### Spark
+
+For the version of Spark we use, 2.4.0, the latest at this time. Replace `2.4.0` in the URLs with `latest` for the "latest" version of Spark, whatever it is.
+
+* [Spark Home](https://spark.apache.org/) (for all versions)
+* [Spark Docs Overview](https://spark.apache.org/docs/2.4.0/index.html)
+* [Spark Structured Streaming Programming Guide](https://spark.apache.org/docs/2.4.0/structured-streaming-programming-guide.html)
+* [Spark Scaladocs](https://spark.apache.org/docs/2.4.0/api/scala/index.html#org.apache.spark.package)
+
+### Flink
+
+We're using version 1.7.X.
+
+* [Flink Home](https://flink.apache.org/)
+* [Flink Docs Overview](https://ci.apache.org/projects/flink/flink-docs-release-1.7/)
+* [Flink Scaladocs](https://ci.apache.org/projects/flink/flink-docs-release-1.7/api/scala/index.html#org.apache.flink.api.scala.package) - does not cover the whole Flink API, so also see...
+* [Flink Javadocs](https://ci.apache.org/projects/flink/flink-docs-release-1.7/api/java/)
+
 
 ### Akka and Akka Streams
 
@@ -413,6 +469,6 @@ This tutorial evolved from an earlier tutorial written by Boris and Dean called 
     * [Colin Breck's blog](http://blog.colinbreck.com/), such as his two-part series on integrating Akka Streams and Akka Actors: [Part I](http://blog.colinbreck.com/integrating-akka-streams-and-akka-actors-part-i/), [Part II](http://blog.colinbreck.com/integrating-akka-streams-and-akka-actors-part-ii/)
     * [Akka Team Blog](https://akka.io/blog/)
 
-### For More Information
+### Lightbend Platform
 
 Lightbend Platform is an integrated and commercially supported platform for streaming data and microservices, including Apache Kafka, Apache Spark, Apache Flink, Akka Streams, and Kafka Streams, plus developer tools and production monitoring and management tools. Please visit https://www.lightbend.com/lightbend-platform for more information.
