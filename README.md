@@ -78,6 +78,13 @@ sbt clean
 rm -rf tmp checkpoints output
 ```
 
+If you start the TensorFlow Serving Docker image described below, you'll want to clean it up when you're done:
+
+```bash
+docker stop tfserving_wine
+docker rm tfserving_wine
+```
+
 ## SBT Projects
 
 The SBT build is organized into several projects under the `root` project. There are four projects that illustrate model-serving techniques: `akkaserver`, `flinkserver`, `sparkserver`, `tensorflowserver`. There are four supporting projects: `client`, `configuration`, `model`, `protobufs`. Finally, the `data` directory contains all the data and models used. A data set for wine is used.
@@ -167,11 +174,18 @@ Alternatively, other options that we won't investigate here include the followin
 
 The easiest way to use TensorFlow Serving is to use the TensorFlow Docker image, as described [here](https://medium.com/tensorflow/serving-ml-quickly-with-tensorflow-serving-and-docker-7df7094aa008).
 
-We'll need to pass the location of this tutorial on your machine to the running container, so we'll first define an environment variable, `TUTORIAL_HOME` to point to this directory, for example:
+We'll need to pass the location of this tutorial on your machine to the running container, so for convenience, we'll first define an environment variable, `TUTORIAL_HOME` to point to this directory. Edit the following definitions for your actual path.
+
+For bash:
+
+```bash
+export TUTORIAL_HOME=$HOME/model-serving-tutorial
+```
+
+For Windows:
 
 ```
-export TUTORIAL_HOME=$HOME/model-serving-tutorial # Bash
-set TUTORIAL_HOME=%HOME%\model-serving-tutorial   # Windows
+set TUTORIAL_HOME=%HOME%\model-serving-tutorial
 ```
 
 Edit as appropriate for your machine. Now you can start the image using the following command:
@@ -211,9 +225,11 @@ This returns the following result:
 }
 ```
 
+> **Note:** The _Clean Up_ section earlier in this doc shows the `docker` commands to clean up this running image when you're done with it.
+
 ### Using TensorFlow Serving Programmatically
 
-The `tensorflowserver` shows how Akka Streams can leverage TensorFlow Serving REST APIs in an Akka Streams implementation.
+The `tensorflowserver` project shows how Akka Streams can leverage TensorFlow Serving REST APIs in an Akka Streams implementation.
 
 There is one application in this project:
 
