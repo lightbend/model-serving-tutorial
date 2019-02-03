@@ -33,7 +33,7 @@ abstract class TensorFlowModel[RECORD,RESULT](inputStream : Array[Byte]) extends
   // Model graph
   var graph = new Graph
   graph.importGraphDef(inputStream)
-  // Create tensorflow session
+  // Create TensorFlow session
   var session = new Session(graph)
   var bytes = inputStream
 
@@ -51,7 +51,7 @@ abstract class TensorFlowModel[RECORD,RESULT](inputStream : Array[Byte]) extends
     }
   }
 
-  // Convert tensorflow model to bytes
+  // Convert TensorFlow model to bytes
   override def toBytes(): Array[Byte] = bytes
 
   // Get model type

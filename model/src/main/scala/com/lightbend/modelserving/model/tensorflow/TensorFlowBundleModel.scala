@@ -60,7 +60,7 @@ abstract class TensorFlowBundleModel[RECORD,RESULT](inputStream : Array[Byte]) e
     val signatureMap = metaGraphDef.getSignatureDefMap.asScala
     //  parse signature, so that we can use definitions (if necessary) programmatically in score method
     signatures = parseSignatures(signatureMap)
-    // Create tensorflow session
+    // Create TensorFlow session
     session = bundle.session
   }
 
@@ -78,7 +78,7 @@ abstract class TensorFlowBundleModel[RECORD,RESULT](inputStream : Array[Byte]) e
     }
   }
 
-  // Convert tensorflow model to bytes
+  // Convert TensorFlow model to bytes
   override def toBytes(): Array[Byte] = bytes
 
   // Get model type

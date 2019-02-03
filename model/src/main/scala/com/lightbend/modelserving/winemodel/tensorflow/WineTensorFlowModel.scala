@@ -33,7 +33,7 @@ class WineTensorFlowModel(inputStream : Array[Byte]) extends TensorFlowModel[Win
 
     // Create input tensor
     val modelInput = toTensor(input)
-    // Serve model using tensorflow APIs
+    // Serve model using TensorFlow APIs
     val result = session.runner.feed("dense_1_input", modelInput).fetch("dense_3/Sigmoid").run().get(0)
     // Get result shape
     val rshape = result.shape
