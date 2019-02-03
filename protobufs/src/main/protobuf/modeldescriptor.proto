@@ -31,6 +31,7 @@ message ModelDescriptor {
     // Data type for which this model is applied.
     string dataType = 3;
     // Model type
+    // Could add PFA, ONNX, …
     enum ModelType {
         TENSORFLOW  = 0;
         TENSORFLOWSAVED  = 1;

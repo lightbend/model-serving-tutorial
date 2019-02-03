@@ -37,7 +37,7 @@ class WineTensorFlowBundledModel(inputStream: Array[Byte]) extends TensorFlowBun
   override def score(input: WineRecord): Double = {
     // Create input tensor
     val modelInput = WineTensorFlowModel.toTensor(input)
-    // Serve model using tensorflow APIs
+    // Serve model using TensorFlow APIs
     val signature = signatures.head._2
     val tinput = signature.inputs.head._2
     val toutput= signature.outputs.head._2

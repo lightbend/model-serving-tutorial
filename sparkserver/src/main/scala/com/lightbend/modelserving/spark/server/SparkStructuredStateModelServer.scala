@@ -49,7 +49,7 @@ object SparkStructuredStateModelServer {
     // Create context
     val sparkSession = SparkSession.builder
       .appName("SparkModelServer")
-      .master("local[3]")  // TODO: don't hard code here
+      .master("local[3]")  // TODO: In production code, don't hard code a value here
       .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .config("spark.kryo.registrator", "com.lightbend.modelserving.spark.ModelStateRegistrator")
       .config("spark.sql.streaming.checkpointLocation", CHECKPOINT_DIR)
