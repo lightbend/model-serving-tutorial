@@ -111,18 +111,14 @@ object SparkStructuredStateModelServer {
     val modelsStream = KafkaUtils.createDirectStream[Array[Byte], Array[Byte]](ssc,PreferConsistent,
       Subscribe[Array[Byte], Array[Byte]](Set(MODELS_TOPIC),kafkaParams))
 
-    // Exercise:
-    // We use the older DStream API next, for it's flexibility. An alternative is
-    // to use the Structured Streaming idiom `streamingDataset.writeStream.foreach {...}`.
-    // Try rewriting the following logic using that approach, as described here:
-    // https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#using-foreach-and-foreachbatch
-
+    // Here we run a model loop as Spark streaming, so that we can get more control
     modelsStream.foreachRDD( rdd =>
       if (!rdd.isEmpty()) {
         val models = rdd.map(_.value).collect
           .map(ModelToServe.fromByteArray(_)).filter(_.isSuccess).map(_.get)
 
-        // Stop the currently running data stream
+        // Stop the currently running Spark structured query, so that we can modify
+        // Model's, that are store in the driver
         println("Stopping data query")
         dataQuery.stop
 
@@ -139,14 +135,14 @@ object SparkStructuredStateModelServer {
           }
         }).toMap
 
-        // Merge maps
+        // Merge maps. This will create a new model's map used by the streaming query
         newModels.foreach{ case (name, value) => {
           if(currentModels.contains(name))
             currentModels(name).model.cleanup()
           currentModels(name) = value
         }}
 
-        // restart the data stream
+        // restart streaming query with new model's map
         println("Starting data query")
         dataQuery = datastream
           .writeStream.outputMode("update")
