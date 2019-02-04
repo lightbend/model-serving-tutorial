@@ -4,9 +4,7 @@
  * This file is part of ModelServing-tutorial
  *
  * ModelServing-tutorial is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,7 +28,7 @@ import org.apache.spark.serializer.KryoRegistrator
 
 
 class ModelStateSerializerKryo extends Serializer[ModelState]{
-  
+
   super.setAcceptsNull(false)
   super.setImmutable(true)
 
@@ -44,7 +42,7 @@ class ModelStateSerializerKryo extends Serializer[ModelState]{
     * serialier.
     *
     * @return May be null if { @link #getAcceptsNull()} is true. */
-  
+
   override def read(kryo: Kryo, input: Input, `type`: Class[ModelState]): ModelState = {
     import ModelStateSerializerKryo._
 
@@ -78,7 +76,7 @@ class ModelStateSerializerKryo extends Serializer[ModelState]{
     * serialier.
     *
     * @param value May be null if { @link #getAcceptsNull()} is true. */
-  
+
   override def write(kryo: Kryo, output: Output, value: ModelState): Unit = {
     val start = System.currentTimeMillis()
     output.writeLong(value.name.length)
