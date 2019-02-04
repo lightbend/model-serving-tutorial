@@ -73,7 +73,7 @@ object SparkStructuredModelServer {
       def onQueryStarted(event: QueryStartedEvent): Unit = {}
       def onQueryProgress(event: QueryProgressEvent): Unit = {
         println(s"Query progress  batch ${event.progress.batchId} at ${event.progress.timestamp}")
-        event.progress.durationMs.asScala.toList.foreach(duration => println(s"${duration._1} - ${duration._2}"))
+        event.progress.durationMs.asScala.toList.foreach(duration => println(s"${duration._1} - ${duration._2}ms"))
         event.progress.sources.foreach(source =>
           println(s"Source ${source.description}, start offset ${source.startOffset}, end offset ${source.endOffset}, " +
             s"input rows ${source.numInputRows}, rows per second ${source.processedRowsPerSecond}")
