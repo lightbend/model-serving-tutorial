@@ -18,7 +18,7 @@
 
 name := "model-serving-tutorial"
 
-version := "0.1"
+version := "0.1.0"
 
 scalaVersion in ThisBuild := "2.12.8" // "2.11.12"
 
