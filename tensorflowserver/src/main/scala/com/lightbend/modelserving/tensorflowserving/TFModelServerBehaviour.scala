@@ -29,6 +29,9 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.google.gson.Gson
 import com.lightbend.modelserving.model.{ModelToServeStats, ServingResult}
 
+/**
+  * This actor forwards requests to score records to TensorFlow Serving
+  */
 class TFModelServerBehaviour(context: ActorContext[TFModelServerActor]) extends AbstractBehavior[TFModelServerActor] {
 
   var currentState = new ModelToServeStats("TensorFlow Model Serving",  "TensorFlow Model Serving")
@@ -42,6 +45,13 @@ class TFModelServerBehaviour(context: ActorContext[TFModelServerActor]) extends 
   implicit val executionContext = system.dispatcher
 
 
+  /**
+    * When passed a record, it creates a request to pass over HTTP to TensorFlow Serving to score the record.
+    * A handler is set up to process the result when returned to the Future. If successful, the result is packaged
+    * and returned to the sender. The other supported msg is a request for the current state. Note also how errors
+    * are handled.
+    * @param msg
+    */
   override def onMessage(msg: TFModelServerActor): Behavior[TFModelServerActor] = {
     msg match {
       case record : ServeData => // Serve data
