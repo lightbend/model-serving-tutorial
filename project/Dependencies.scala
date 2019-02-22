@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 import Versions._
@@ -50,14 +49,20 @@ object Dependencies {
   val akkaHttpJsonJackson   = "de.heikoseeberger"       %% "akka-http-jackson"                  % akkaHttpJsonVersion
   val akkatyped             = "com.typesafe.akka"       %% "akka-actor-typed"                   % akkaVersion
 
-  val gson                  = "com.google.code.gson"    % "gson"                                % gsonVersion
+  val gson                  = "com.google.code.gson"     % "gson"                               % gsonVersion
 
-  val slf4jlog4j            = "org.slf4j"               % "slf4j-log4j12"                       % slf4jlog4jVersion
+  val slf4jlog4j            = "org.slf4j"                % "slf4j-log4j12"                      % slf4jlog4jVersion
 
-  val modelsDependencies = Seq(PMMLEvaluator, PMMLExtensions, tensorFlow, tensorFlowProto)
-  val clientDependencies = Seq(kafka, curator, commonIO, slf4jlog4j)
-  val flinkDependencies = Seq(flinkScala, flinkStreaming, flinkKafka, flinkQueryableRuntime, flinkQueryableClient, joda, slf4jlog4j)
-  val sparkDependencies = Seq(sparkcore, sparkstreaming, sparkkafka, sparkSQL, sparkSQLkafka, slf4jlog4j)
-  val akkaServerDependencies = Seq(alpakkaKafka, akkaStreamTyped, akkatyped, akkaHttp, akkaHttpJsonJackson, slf4jlog4j)
+  // Adds the @silencer annotation for suppressing deprecation warnings we don't care about.
+  val silencer              = "com.github.ghik"         %% "silencer-lib"                       % silencerVersion     % Provided
+  val silencerPlugin        = "com.github.ghik"         %% "silencer-plugin"                    % silencerVersion     % Provided
+
+  val silencerDependencies = Seq(compilerPlugin(silencerPlugin), silencer)
+
+  val modelsDependencies = Seq(PMMLEvaluator, PMMLExtensions, tensorFlow, tensorFlowProto) ++ silencerDependencies
+  val clientDependencies = Seq(kafka, curator, commonIO, slf4jlog4j) ++ silencerDependencies
+  val flinkDependencies = Seq(flinkScala, flinkStreaming, flinkKafka, flinkQueryableRuntime, flinkQueryableClient, joda, slf4jlog4j) ++ silencerDependencies
+  val sparkDependencies = Seq(sparkcore, sparkstreaming, sparkkafka, sparkSQL, sparkSQLkafka, slf4jlog4j) ++ silencerDependencies
+  val akkaServerDependencies = Seq(alpakkaKafka, akkaStreamTyped, akkatyped, akkaHttp, akkaHttpJsonJackson, slf4jlog4j) ++ silencerDependencies
 
 }
