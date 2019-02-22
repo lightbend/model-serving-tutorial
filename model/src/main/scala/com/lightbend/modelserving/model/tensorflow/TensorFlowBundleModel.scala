@@ -29,12 +29,12 @@ import org.tensorflow.framework.{MetaGraphDef, SavedModel, SignatureDef, TensorI
 
 import scala.collection.JavaConverters._
 
-
-// Abstract class for any TensorFlow (SavedModelBundle) model processing. It has to be extended by the user
-// implement score method, based on his own model
-// This is a very simple implementation, assuming that the TensorFlow saved model bundle is local (constructor, get tags)
-// The realistic implementation has to use some shared data storage, for example, S3, Minio, etc.
-
+/**
+  * Abstract class for any TensorFlow (SavedModelBundle) model processing. It has to be extended by the user
+  * implement score method, based on his own model
+  * This is a very simple implementation, assuming that the TensorFlow saved model bundle is local (constructor, get tags)
+  * The realistic implementation has to use some shared data storage, for example, S3, Minio, etc.
+  */
 abstract class TensorFlowBundleModel[RECORD,RESULT](inputStream : Array[Byte]) extends Model[RECORD,RESULT]  with Serializable {
 
   var bytes = inputStream
@@ -62,7 +62,6 @@ abstract class TensorFlowBundleModel[RECORD,RESULT](inputStream : Array[Byte]) e
     session = bundle.session
   }
 
-  // Cleanup
   override def cleanup(): Unit = {
     try{
       session.close
@@ -76,10 +75,10 @@ abstract class TensorFlowBundleModel[RECORD,RESULT](inputStream : Array[Byte]) e
     }
   }
 
-  // Convert TensorFlow model to bytes
+  /** Convert TensorFlow model to bytes */
   override def toBytes(): Array[Byte] = bytes
 
-  // Get model type
+  /** Get model type */
   override def getType: Long = ModelDescriptor.ModelType.TENSORFLOWSAVED.value
 
   override def equals(obj: Any): Boolean = {
@@ -111,15 +110,12 @@ abstract class TensorFlowBundleModel[RECORD,RESULT](inputStream : Array[Byte]) e
     }
   }
 
-
-  // Parse signature
   private def parseSignatures(signatures : MMap[String, SignatureDef]) : Map[String, Signature] = {
     signatures.map(signature =>
       signature._1 -> Signature(parseInputOutput(signature._2.getInputsMap.asScala), parseInputOutput(signature._2.getOutputsMap.asScala))
     ).toMap
   }
 
-  // Parse input and output
   private def parseInputOutput(inputOutputs : MMap[String, TensorInfo]) : Map[String, Field] = {
     inputOutputs.map(inputOutput => {
       var name = ""
@@ -159,8 +155,8 @@ abstract class TensorFlowBundleModel[RECORD,RESULT](inputStream : Array[Byte]) e
   }
 }
 
-// Definition of the field (input/output)
+/** Definition of the field (input/output) */
 case class Field(name : String, `type` : Descriptors.EnumValueDescriptor, shape : Seq[Int])
 
-// Definition of the signature
+/** Definition of the signature */
 case class Signature(inputs :  Map[String, Field], outputs :  Map[String, Field])

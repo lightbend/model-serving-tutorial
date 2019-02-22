@@ -35,6 +35,7 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import scala.concurrent.duration._
 import scala.util.Success
 
+/** Entry point for the Akka Server example. */
 object AkkaModelServer {
 
   import ModelServingConfiguration._
@@ -49,12 +50,13 @@ object AkkaModelServer {
   implicit val executionContext = modelServerManager.executionContext
   implicit val askTimeout = Timeout(30.seconds)
 
-  // Sources
+  /** Kafka topic configuration for the data records source. */
   val dataSettings = ConsumerSettings(modelServerManager.toUntyped, new ByteArrayDeserializer, new ByteArrayDeserializer)
     .withBootstrapServers(KAFKA_BROKER)
     .withGroupId(DATA_GROUP)
     .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
 
+  /** Kafka topic configuration for the model parameters source. */
   val modelSettings = ConsumerSettings(modelServerManager.toUntyped, new ByteArrayDeserializer, new ByteArrayDeserializer)
     .withBootstrapServers(KAFKA_BROKER)
     .withGroupId(MODELS_GROUP)
@@ -70,13 +72,13 @@ object AkkaModelServer {
     // Model stream processing
     Consumer.atMostOnceSource(modelSettings, Subscriptions.topics(MODELS_TOPIC))
       .map(record => ModelToServe.fromByteArray(record.value)).collect { case Success(a) => a }
-      .via(ActorFlow.ask(1)(modelServerManager)((elem, replyTo : ActorRef[Done]) => new ModelUpdate(replyTo, elem)))
+      .via(ActorFlow.ask(1)(modelServerManager)((elem, replyTo : ActorRef[Done]) => new UpdateModel(replyTo, elem)))
       .runWith(Sink.ignore) // run the stream, we do not read the results directly
 
     // Data stream processing
     Consumer.atMostOnceSource(dataSettings, Subscriptions.topics(DATA_TOPIC))
       .map(record => DataRecord.fromByteArray(record.value)).collect { case Success(a) => a }
-      .via(ActorFlow.ask(1)(modelServerManager)((elem, replyTo : ActorRef[Option[ServingResult[Double]]]) => new ServeData(replyTo, elem)))
+      .via(ActorFlow.ask(1)(modelServerManager)((elem, replyTo : ActorRef[Option[ServingResult[Double]]]) => new ScoreData(replyTo, elem)))
       .collect{ case (Some(result)) => result}
       .runWith(Sink.foreach(result =>
         println(s"Model serving in ${System.currentTimeMillis() - result.duration} ms, with result ${result.result} " +

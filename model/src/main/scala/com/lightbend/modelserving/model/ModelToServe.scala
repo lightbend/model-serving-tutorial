@@ -26,16 +26,14 @@ import com.lightbend.model.modeldescriptor.ModelDescriptor
   */
 object ModelToServe {
 
-  // Model Factory resolver
   private var resolver : ModelFactoryResolver[_, _] = _
 
-  // This method has to be invoked before execution starts
+  /** This method has to be invoked before execution starts */
   def setResolver[RECORD, RESULT](res : ModelFactoryResolver[RECORD, RESULT]) : Unit = resolver = res
 
-  // Convert to String
   override def toString: String = super.toString
 
-  // Get the model from byte array
+  /** Get the model from byte array */
   def fromByteArray(message: Array[Byte]): Try[ModelToServe] = Try{
     val m = ModelDescriptor.parseFrom(message)
     m.messageContent.isData match {
@@ -44,7 +42,7 @@ object ModelToServe {
     }
   }
 
-  // Write model to data stream
+  /** Write the model to data stream */
   def writeModel[RECORD,RESULT](model: Model[RECORD,RESULT], output: DataOutputStream): Unit = {
     try {
       if (model == null) {
@@ -62,7 +60,7 @@ object ModelToServe {
     }
   }
 
-  // Deep copy the model
+  /** Deep copy the model */
   def copy[RECORD,RESULT](from: Option[Model[RECORD,RESULT]]): Option[Model[RECORD,RESULT]] = {
     validateResolver()
     from match {
@@ -73,13 +71,13 @@ object ModelToServe {
     }
   }
 
-  // Restore model from byte array
+  /** Restore model from byte array */
   def restore[RECORD,RESULT](t : Int, content : Array[Byte]): Option[Model[RECORD,RESULT]] = {
     validateResolver()
     Some(resolver.getFactory(t).get.restore(content).asInstanceOf[Model[RECORD,RESULT]])
   }
 
-  // Get the model from ModelToServe
+  /** Get the model from ModelToServe */
   def toModel[RECORD,RESULT](model: ModelToServe): Option[Model[RECORD,RESULT]] = {
     validateResolver()
     resolver.getFactory(model.modelType) match {
@@ -91,22 +89,29 @@ object ModelToServe {
     }
   }
 
-  // Ensure that resolver is set
+  /** Ensure that the resolver is set */
   private def validateResolver() : Unit = if(resolver == null) throw new Exception("Model factory resolver is not set")
 }
 
-// Model to serve definition
+/**
+  * Encapsulates a model to serve along with some metadata about it.
+  */
 case class ModelToServe(name: String, description: String, modelType: Int, model : Array[Byte], location : String, dataType : String)
 
 
-// Model serving statistics definition
+/**
+  * Model serving statistics definition
+  */
 case class ModelToServeStats(name: String = "", description: String = "",
                              modelType: Int = ModelDescriptor.ModelType.PMML.value,
                              since : Long = 0, var usage : Long = 0, var duration : Double = .0,
                              var min : Long = Long.MaxValue, var max : Long = Long.MinValue){
   def this(m : ModelToServe) = this(m.name, m.description, m.modelType, System.currentTimeMillis())
 
-  // Increment model serving statistics invoked for every processing
+  /**
+    * Increment model serving statistics; invoked after scoring every record.
+    * @arg execution Long value for the milliseconds it took to score the record.
+    */
   def incrementUsage(execution : Long) : ModelToServeStats = {
     usage = usage + 1
     duration = duration + execution

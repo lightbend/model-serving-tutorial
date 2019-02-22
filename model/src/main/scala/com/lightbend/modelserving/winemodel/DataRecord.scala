@@ -21,7 +21,9 @@ import com.lightbend.modelserving.model.DataToServe
 
 import scala.util.Try
 
-// Container for wine data
+/**
+  * Container for a wine data record.
+  */
 object DataRecord {
 
   def fromByteArray(message: Array[Byte]): Try[DataToServe[WineRecord]] = Try {

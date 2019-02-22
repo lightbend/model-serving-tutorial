@@ -28,8 +28,10 @@ import org.jpmml.model.PMMLUtil
 
 import scala.collection._
 
-// Abstract class for any PMML model processing. It has to be extended by the user
-// implement score method, based on his own model. Serializability here is required for Spark
+/**
+  * Abstract class for any PMML model processing. It has to be extended by the user
+  * implement score method, based on his own model. Serializability here is required for Spark
+  */
 abstract class PMMLModel[RECORD,RESULT](inputStream: Array[Byte]) extends Model[RECORD,RESULT] with Serializable {
 
   var arguments : mutable.Map[FieldName, FieldValue] = _
@@ -99,7 +101,7 @@ object PMMLModelBase{
   // List of PMML optimizers (https://groups.google.com/forum/#!topic/jpmml/rUpv8hOuS3A)
   private val optimizers = Array(new ExpressionOptimizer, new FieldOptimizer, new PredicateOptimizer, new GeneralRegressionModelOptimizer, new NaiveBayesModelOptimizer, new RegressionModelOptimizer)
 
-  // OPtimize PMML model
+  /** Optimize a PMML model */
   def optimize(pmml : PMML) = this.synchronized {
     optimizers.foreach(opt =>
       try {

@@ -16,7 +16,9 @@
 
 package com.lightbend.modelserving.model
 
-// Generic definition of the model factory
+/**
+  * Generic definition of a model factory
+  */
 trait ModelFactory[RECORD,RESULT] {
   def create(input : ModelToServe) : Option[Model[RECORD,RESULT]]
   def restore(bytes : Array[Byte]) : Model[RECORD,RESULT]

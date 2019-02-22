@@ -23,8 +23,8 @@ import com.lightbend.modelserving.model.{DataToServe, ModelToServe, ModelToServe
 
 // Controller
 trait ModelServerActor
-case class ModelUpdate(reply: ActorRef[Done], model : ModelToServe) extends ModelServerActor with ModelServerManagerActor
-case class ServeData(reply: ActorRef[Option[ServingResult[Double]]], record : DataToServe[WineRecord]) extends ModelServerActor with ModelServerManagerActor
+case class UpdateModel(reply: ActorRef[Done], model : ModelToServe) extends ModelServerActor with ModelServerManagerActor
+case class ScoreData(reply: ActorRef[Option[ServingResult[Double]]], record : DataToServe[WineRecord]) extends ModelServerActor with ModelServerManagerActor
 case class GetState(reply: ActorRef[ModelToServeStats], dataType : String) extends ModelServerActor with ModelServerManagerActor
 
 // Controller manager

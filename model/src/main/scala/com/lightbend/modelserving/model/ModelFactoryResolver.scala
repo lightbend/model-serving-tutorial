@@ -16,13 +16,14 @@
 
 package com.lightbend.modelserving.model
 
-// Base interface for ModelFactories resolver. The implementation of this trait should return model factory
-// base on a model type. Currently the following types are defined:
-//        TENSORFLOW  = 0;
-//        TENSORFLOWSAVED  = 1;
-//        PMML = 2;
-// Additional types can be defined as required
-
+/**
+  * Base interface for ModelFactories resolver. The implementation of this trait should return the model factory
+  * base on a model type. Currently the following types are defined:
+  *        TENSORFLOW  = 0;
+  *        TENSORFLOWSAVED  = 1;
+  *        PMML = 2;
+  * Additional types can be defined as required.
+  */
 trait ModelFactoryResolver[RECORD, RESULT] {
   def getFactory(`type` : Int) : Option[ModelFactory[RECORD, RESULT]]
 }

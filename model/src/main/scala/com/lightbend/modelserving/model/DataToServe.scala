@@ -16,7 +16,9 @@
 
 package com.lightbend.modelserving.model
 
-// Container for the data to serve
+/**
+  * Container for the data to serve
+  */
 trait DataToServe[RECORD] {
   def getType : String
   def getRecord : RECORD

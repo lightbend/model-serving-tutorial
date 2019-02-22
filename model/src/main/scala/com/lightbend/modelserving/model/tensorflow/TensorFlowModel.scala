@@ -22,8 +22,10 @@ import com.lightbend.model.modeldescriptor.ModelDescriptor
 import com.lightbend.modelserving.model.Model
 import org.tensorflow.{Graph, Session}
 
-// Abstract class for any TensorFlow (optimized export) model processing. It has to be extended by the user
-// implement score method, based on his own model. Serializability here is required for Spark
+/**
+  * Abstract class for any TensorFlow (optimized export) model processing. It has to be extended by the user
+  * implement score method, based on his own model. Serializability here is required for Spark.
+  */
 abstract class TensorFlowModel[RECORD,RESULT](inputStream : Array[Byte]) extends Model[RECORD,RESULT] with Serializable {
 
   // Make sure data is not empty
@@ -35,7 +37,6 @@ abstract class TensorFlowModel[RECORD,RESULT](inputStream : Array[Byte]) extends
   var session = new Session(graph)
   var bytes = inputStream
 
-  // Cleanup
   override def cleanup(): Unit = {
     try{
       session.close
@@ -49,10 +50,10 @@ abstract class TensorFlowModel[RECORD,RESULT](inputStream : Array[Byte]) extends
     }
   }
 
-  // Convert TensorFlow model to bytes
+  /** Convert the TensorFlow model to bytes */
   override def toBytes(): Array[Byte] = bytes
 
-  // Get model type
+  /** Get model type */
   override def getType: Long = ModelDescriptor.ModelType.TENSORFLOW.value
 
   override def equals(obj: Any): Boolean = {

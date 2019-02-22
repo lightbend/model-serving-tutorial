@@ -72,7 +72,13 @@ class TFModelServerBehaviour(context: ActorContext[TFModelServerActor]) extends 
         val request = Request("predict", Seq(input).toArray)
 
         // Post request
-
+        // Exercise:
+        // One potential problem with the following code is that it uses default connection pool settings,
+        // such as the maximum number of retries, etc. This is controlled by a default value for the argument
+        // `settings: ConnectionPoolSettings` that `singleRequest` accepts. The default behavior is normally fine, but if
+        // if you need tighter control, you can pass your own `ConnectionPoolSettings` object with non-default behavior.
+        // To see what to try, select `singleRequest` and use <command>-b (Mac) or <control>-b (Windows & Linux) to
+        // navigate to the implementation and then to the `ConnectionPoolSettings` object.
         val start = System.currentTimeMillis()
         val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(
           method = HttpMethods.POST,

@@ -22,7 +22,8 @@ import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext}
 import com.lightbend.model.winerecord.WineRecord
 import com.lightbend.modelserving.model.{Model, ModelToServe, ModelToServeStats, ServingResult}
 
-class ModelServerBehaviour(context: ActorContext[ModelServerActor], dataType : String) extends AbstractBehavior[ModelServerActor] {
+/** Akka Typed Actor for handling a single model, including updates to it and scoring with it. */
+class ModelServerBehavior(context: ActorContext[ModelServerActor], dataType : String) extends AbstractBehavior[ModelServerActor] {
 
   println(s"Creating a new Model Server for data type $dataType")
 
@@ -33,13 +34,13 @@ class ModelServerBehaviour(context: ActorContext[ModelServerActor], dataType : S
 
   override def onMessage(msg: ModelServerActor): Behavior[ModelServerActor] = {
     msg match {
-      case model : ModelUpdate => // Update Model
+      case model : UpdateModel => // Update Model
         // Update model
         println(s"Updated model: ${model.model}")
         newState = Some(new ModelToServeStats(model.model))
         newModel = ModelToServe.toModel(model.model)
         model.reply ! Done
-      case record : ServeData => // Serve data
+      case record : ScoreData => // Serve data
         // See if we have update for the model
         newModel.foreach { model =>
           // close current model first

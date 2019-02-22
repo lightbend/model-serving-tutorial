@@ -22,11 +22,14 @@ import com.lightbend.modelserving.model.{Model, ModelFactory}
 import com.lightbend.modelserving.model.ModelToServe
 import org.tensorflow.Tensor
 
-// TensorFlow model implementation for wine data
+/**
+  * TensorFlow model implementation for wine data
+  */
 class WineTensorFlowModel(inputStream : Array[Byte]) extends TensorFlowModel[WineRecord, Double](inputStream) {
 
   import WineTensorFlowModel._
 
+  /** Score a wine record with the model */
   override def score(input: WineRecord): Double = {
 
     // Create input tensor
@@ -43,7 +46,7 @@ class WineTensorFlowModel(inputStream : Array[Byte]) extends TensorFlowModel[Win
   }
 }
 
-// Factory for wine data PMML model
+/** Factory for wine data PMML model */
 object WineTensorFlowModel extends  ModelFactory[WineRecord, Double] {
 
   def toTensor(record: WineRecord) : Tensor[_] = {
