@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.spark
@@ -81,7 +80,7 @@ class ModelStateSerializerKryo extends Serializer[ModelState]{
     val start = System.currentTimeMillis()
     output.writeLong(value.name.length)
     output.write(value.name.getBytes)
-    output.writeLong(value.model.getType)
+    output.writeLong(value.model.getType.value.toLong)
     val bytes = value.model.toBytes
     output.writeLong(bytes.length)
     output.write(bytes)

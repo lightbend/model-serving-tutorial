@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.model
@@ -37,8 +36,8 @@ object ModelToServe {
   def fromByteArray(message: Array[Byte]): Try[ModelToServe] = Try{
     val m = ModelDescriptor.parseFrom(message)
     m.messageContent.isData match {
-      case true => new ModelToServe(m.name, m.description, m.modeltype.value, m.getData.toByteArray, null, m.dataType)
-      case _ => new ModelToServe(m.name, m.description, m.modeltype.value, Array[Byte](), m.getLocation, m.dataType)
+      case true => new ModelToServe(m.name, m.description, m.modeltype, m.getData.toByteArray, null, m.dataType)
+      case _ => new ModelToServe(m.name, m.description, m.modeltype, Array[Byte](), m.getLocation, m.dataType)
     }
   }
 
@@ -51,7 +50,7 @@ object ModelToServe {
       }
       val bytes = model.toBytes()
       output.writeLong(bytes.length)
-      output.writeLong(model.getType)
+      output.writeLong(model.getType.value)
       output.write(bytes)
     } catch {
       case t: Throwable =>
@@ -66,15 +65,21 @@ object ModelToServe {
     from match {
       case Some(model) =>
         validateResolver()
-        Some(resolver.getFactory(model.getType.asInstanceOf[Int]).get.restore(model.toBytes()).asInstanceOf[Model[RECORD,RESULT]])
+        Some(resolver.getFactory(model.getType).get.restore(model.toBytes()).asInstanceOf[Model[RECORD,RESULT]])
       case _ => None
     }
   }
 
-  /** Restore model from byte array */
-  def restore[RECORD,RESULT](t : Int, content : Array[Byte]): Option[Model[RECORD,RESULT]] = {
+  /** Restore model of the specified ModelType from a byte array */
+  def restore[RECORD,RESULT](t : ModelDescriptor.ModelType, content : Array[Byte]): Option[Model[RECORD,RESULT]] = {
     validateResolver()
     Some(resolver.getFactory(t).get.restore(content).asInstanceOf[Model[RECORD,RESULT]])
+  }
+
+  /** Restore model of the specified ModelType value from a byte array */
+  def restore[RECORD,RESULT](tValue : Int, content : Array[Byte]): Option[Model[RECORD,RESULT]] = {
+    validateResolver()
+    Some(resolver.getFactory(tValue).get.restore(content).asInstanceOf[Model[RECORD,RESULT]])
   }
 
   /** Get the model from ModelToServe */
@@ -96,17 +101,27 @@ object ModelToServe {
 /**
   * Encapsulates a model to serve along with some metadata about it.
   */
-case class ModelToServe(name: String, description: String, modelType: Int, model : Array[Byte], location : String, dataType : String)
+case class ModelToServe(
+  name: String,
+  description: String,
+  modelType: ModelDescriptor.ModelType,
+  model : Array[Byte],
+  location : String,
+  dataType : String)
 
 
 /**
   * Model serving statistics definition
   */
-case class ModelToServeStats(name: String = "", description: String = "",
-                             modelType: Int = ModelDescriptor.ModelType.PMML.value,
-                             since : Long = 0, var usage : Long = 0, var duration : Double = .0,
-                             var min : Long = Long.MaxValue, var max : Long = Long.MinValue){
-  def this(m : ModelToServe) = this(m.name, m.description, m.modelType, System.currentTimeMillis())
+case class ModelToServeStats(
+  name: String = "",
+  description: String = "",
+  modelType: ModelDescriptor.ModelType = ModelDescriptor.ModelType.PMML,
+  since: Long = 0,
+  var usage: Long = 0,
+  var duration: Double = .0,
+  var min: Long = Long.MaxValue,
+  var max: Long = Long.MinValue) {
 
   /**
     * Increment model serving statistics; invoked after scoring every record.
@@ -119,4 +134,8 @@ case class ModelToServeStats(name: String = "", description: String = "",
     if(execution > max) max = execution
     this
   }
+}
+
+object ModelToServeStats {
+  def apply(m : ModelToServe): ModelToServeStats = ModelToServeStats(m.name, m.description, m.modelType, System.currentTimeMillis())
 }
