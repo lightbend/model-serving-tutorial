@@ -24,7 +24,7 @@ import org.apache.flink.queryablestate.client.QueryableStateClient
 import org.joda.time.DateTime
 
 /**
-  * ModelStateQuery - query model state (works only for keyed implementation).
+  * ModelStateQuery - query model state (works only for the keyed implementation).
   */
 object ModelStateQuery {
 
@@ -32,8 +32,7 @@ object ModelStateQuery {
   val defaulttimeInterval = 1000 * 20        // 20 sec
 
   /**
-    * Main method. When using make sure that you set job ID correctly
-    *
+    * Invoke the query. Make sure you set the job ID correctly when invoking.
     */
   def query(job: String, keys: Seq[String], host: String = "127.0.0.1", port: Int = 9069,
             timeInterval: Long=defaulttimeInterval): Unit = {

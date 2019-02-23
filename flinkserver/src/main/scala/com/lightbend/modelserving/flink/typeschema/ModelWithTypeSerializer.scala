@@ -23,7 +23,7 @@ import org.apache.flink.util.InstantiationUtil
 import com.lightbend.modelserving.flink.ModelWithType
 import com.lightbend.modelserving.model.ModelToServe
 
-// Serializer for Model with State
+/** Serializer for a Model with State */
 class ModelWithTypeSerializer[RECORD, RESULT] extends TypeSerializer[ModelWithType[RECORD, RESULT]] {
 
   override def createInstance(): ModelWithType[RECORD, RESULT] = new ModelWithType[RECORD, RESULT](false, "", null)
@@ -101,8 +101,10 @@ object ModelWithTypeSerializerConfigSnapshot{
   val CURRENT_VERSION = 1
 }
 
-// Snapshot configuration for Model with type serializer
-// See https://github.com/apache/flink/blob/master/flink-core/src/main/java/org/apache/flink/api/common/typeutils/SimpleTypeSerializerSnapshot.java
+/**
+  * Snapshot configuration for a Model with a type serializer
+  * See https://github.com/apache/flink/blob/master/flink-core/src/main/java/org/apache/flink/api/common/typeutils/SimpleTypeSerializerSnapshot.java
+  */
 class ModelWithTypeSerializerConfigSnapshot[RECORD, RESULT] extends SimpleTypeSerializerSnapshot[ModelWithType[RECORD, RESULT]]{
 
   import ModelWithTypeSerializerConfigSnapshot._

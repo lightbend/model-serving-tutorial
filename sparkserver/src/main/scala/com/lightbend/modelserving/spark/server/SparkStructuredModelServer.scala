@@ -15,10 +15,6 @@
 
 package com.lightbend.modelserving.spark.server
 
-/**
-  * Implementation of Model serving using Spark Structured Streaming server.
-  */
-
 import com.lightbend.modelserving.configuration.ModelServingConfiguration
 import com.lightbend.modelserving.model.{ModelToServe, ServingResult}
 import com.lightbend.modelserving.spark.{DataWithModel, ModelState, ModelStateSerializerKryo}
@@ -32,6 +28,9 @@ import scala.collection.mutable.ListBuffer
 
 import scala.collection.JavaConverters._
 
+/**
+  * Application that performs model serving using Spark Structured Streaming.
+  */
 object SparkStructuredModelServer {
 
   implicit val modelStateEncoder  = Encoders.kryo[ModelState]
@@ -81,7 +80,7 @@ object SparkStructuredModelServer {
     // Attach query listener
     sparkSession.streams.addListener(queryListener)
 
-    // Create data stream
+    // Create the stream for the data (records)
     val datastream = sparkSession
       .readStream
       .format("kafka")
@@ -97,7 +96,7 @@ object SparkStructuredModelServer {
       .as[DataWithModel]
 
 
-    // Create model stream
+    // Create the stream for the model updates
     val modelstream = sparkSession
       .readStream
       .format("kafka")
@@ -111,11 +110,20 @@ object SparkStructuredModelServer {
       .select("data.dataType", "data.data", "data.model")
       .as[DataWithModel]
 
+    // Exercise:
+    // We union the records into one stream next, then we'll have the same processing logic handle records of both types.
+    // As described below, this means that we can't use continuous processing, because it doesn't work with unions.
+    // We have to use mini-batches instead.
+    // What if you redesign the code to keep the streams separate, but apply the same `modelServing` transformation to
+    // both in a `mapGroupsWithState` call, as below, or you could try splitting `modelServing` into the separates part
+    // for scoring and updating models. Does it still work correctly, especially in a distributed setting
+    // (vs. Spark local mode)? Not using unions would allow us to use continuous processing, which can't be used with unions.
+
     // Order matters here - the data stream is appended to the end so that all the model records will
     // be processed first and data records after them.
     val datamodelstream = modelstream.union(datastream)
 
-    // Actual model serving
+    // Actual model serving (i.e., scoring records)
     val servingresultsstream = datamodelstream
       .filter(_.dataType.length > 0)
       .groupByKey(_.dataType)
@@ -124,13 +132,13 @@ object SparkStructuredModelServer {
       .select("value.name", "value.dataType", "value.duration", "value.result")
 
 
+    // Ideally, we would use continuous processing here, but it does not work due to the error
+    //   Exception in thread "main" org.apache.spark.sql.AnalysisException: Continuous processing does not support Union operations:
+    //      .trigger(Trigger.Continuous("1 second"))
+    // Instead, we use a processingTime trigger with one-second micro-batch intervals
     servingresultsstream.writeStream
       .outputMode("update")
       .format("console").option("truncate", false).option("numRows", 10) // 10 is the default
-      // Ideally, we would use continuous processing here, but it does not work due to the error
-      // Exception in thread "main" org.apache.spark.sql.AnalysisException: Continuous processing does not support Union operations.;;
-      //      .trigger(Trigger.Continuous("1 second"))
-      // Instead, we use processingTime trigger with one-second micro-batch interval
       .trigger(Trigger.ProcessingTime("1 second"))
       .start
 
@@ -138,15 +146,18 @@ object SparkStructuredModelServer {
     sparkSession.streams.awaitAnyTermination()
   }
 
-  // A mapping function that implements actual model serving
-  // For some descriptions on documentation and how it works see:
-  // http://www.waitingforcode.com/apache-spark-structured-streaming/stateful-transformations-mapgroupswithstate/read
-  // and https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.streaming.GroupState
+  /**
+    * A mapping function that implements actual model serving. It handles model updates as well as records that need scoring.
+    * For a description of how it works see:
+    *   http://www.waitingforcode.com/apache-spark-structured-streaming/stateful-transformations-mapgroupswithstate/read
+    * and
+    *   https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.streaming.GroupState
+    */
   def modelServing(key: String, values: Iterator[DataWithModel], state: GroupState[ModelState]) : Seq[ServingResult[Double]] = {
     var results = new ListBuffer[ServingResult[Double]]()
     values.foreach(value => {
       value.data match {
-        case null =>  // This model
+        case null =>  // The current value actually holds a model
           println(s"New model ${value.model}")
           if (state.exists){  // updating existing model
             state.get.model.cleanup()
@@ -155,14 +166,14 @@ object SparkStructuredModelServer {
 
           // Update state with the new model
           val model = WineFactoryResolver.getFactory(value.model.modelType) match {
-            case Some(factory) => factory.create(value.model)
+            case Some(factory) => factory.create(value.model) // could return Some(model) or None!
             case _ => None
           }
           model match {
             case Some(m) => state.update(ModelState(value.model.name, m))
             case _ =>
           }
-        case _ => // This is data
+        case _ => // The current value holds a record
           if (state.exists) {
             val result = state.get.model.score(value.data)
             results += ServingResult(state.get.name, value.dataType, System.currentTimeMillis() - value.data.ts, result)

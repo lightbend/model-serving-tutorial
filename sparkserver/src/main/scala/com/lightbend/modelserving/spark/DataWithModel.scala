@@ -19,12 +19,15 @@ import com.lightbend.model.winerecord.WineRecord
 import com.lightbend.modelserving.model.{Model, ModelToServe}
 import com.lightbend.modelserving.winemodel.DataRecord
 
+// Exercise:
+// Using nulls in Scala code is discouraged, although sometimes convenient, as here.
+// Try refactoring the code use `data: Option[WinRecord]` and `model: Option[ModelToServe]`.
 
 /**
   * Unified representation of model and data.
-  * Ideally we would off use here DataToServe as a generic representation of the data, but according
+  * Ideally we could use DataToServe here as a generic representation of the data, but according
   * to https://stackoverflow.com/questions/42121649/schema-for-type-any-is-not-supported/42130708
-  * Any and AnyVal are not supported by Spark Streaming
+  * Any and AnyVal are not supported by Spark Streaming.
   */
 case class DataWithModel(dataType : String, data : WineRecord, model : ModelToServe)
 

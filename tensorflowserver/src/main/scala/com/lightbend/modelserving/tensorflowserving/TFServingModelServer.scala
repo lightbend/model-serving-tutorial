@@ -33,6 +33,9 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import scala.concurrent.duration._
 import scala.util.Success
 
+/**
+  * Entry point for an application that uses TensorFlow Serving for scoring records with models.
+  */
 object TFServingModelServer {
 
   import ModelServingConfiguration._
@@ -47,7 +50,7 @@ object TFServingModelServer {
   implicit val executionContext = modelServer.executionContext
   implicit val askTimeout = Timeout(30.seconds)
 
-  // Sources
+  // Configuration properties for the Kafka topic.
   val dataSettings = ConsumerSettings(modelServer.toUntyped, new ByteArrayDeserializer, new ByteArrayDeserializer)
     .withBootstrapServers(KAFKA_BROKER)
     .withGroupId(DATA_GROUP)
@@ -55,7 +58,7 @@ object TFServingModelServer {
 
   def main(args: Array[String]): Unit = {
 
-    println(s"Akka model server, brokers $KAFKA_BROKER")
+    println(s"Akka application that uses TensorFlow Serving, brokers $KAFKA_BROKER")
 
     // Data stream processing
     Consumer.atMostOnceSource(dataSettings, Subscriptions.topics(DATA_TOPIC))

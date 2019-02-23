@@ -15,10 +15,6 @@
 
 package com.lightbend.modelserving.flink.partitioned
 
-/**
-  * Main class processing data using models (partitioned)
-  *
-  */
 import com.lightbend.model.winerecord.WineRecord
 import com.lightbend.modelserving.model.{DataToServe, Model}
 import com.lightbend.modelserving.flink.ModelWithType
@@ -33,10 +29,9 @@ import org.apache.flink.util.Collector
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{ListBuffer, Map}
 
-object DataProcessorMap{
-  def apply[RECORD, RESULT]() = new DataProcessorMap[RECORD, RESULT]
-}
-
+/**
+  * Main class processing data using models where state is partitioned, rather than keyed.
+  */
 class DataProcessorMap[RECORD, RESULT] extends RichCoFlatMapFunction[DataToServe[RECORD], ModelToServe, ServingResult[RESULT]] with CheckpointedFunction {
 
   // Current models
@@ -47,7 +42,7 @@ class DataProcessorMap[RECORD, RESULT] extends RichCoFlatMapFunction[DataToServe
   // Checkpointing state
   @transient private var checkpointedState: ListState[ModelWithType[RECORD, RESULT]] = _
 
-  // Create a snapshot
+  /** Create a snapshot (checkpoint) of the state */
   override def snapshotState(context: FunctionSnapshotContext): Unit = {
     // Clear checkpointing state
     checkpointedState.clear()
@@ -56,7 +51,7 @@ class DataProcessorMap[RECORD, RESULT] extends RichCoFlatMapFunction[DataToServe
     newModels.foreach(entry => checkpointedState.add(new ModelWithType[RECORD, RESULT](false, entry._1, entry._2)))
   }
 
-  // Restore checkpoint
+  /** Restore the state from a checkpoint */
   override def initializeState(context: FunctionInitializationContext): Unit = {
     // Checkpointing descriptor
     val checkPointDescriptor = new ListStateDescriptor[ModelWithType[RECORD, RESULT]] (
@@ -83,40 +78,53 @@ class DataProcessorMap[RECORD, RESULT] extends RichCoFlatMapFunction[DataToServe
     }
   }
 
-  // Process new model
+  /** Process a new model */
   override def flatMap2(model: ModelToServe, out: Collector[ServingResult[RESULT]]): Unit = {
 
     println(s"New model - $model")
     ModelToServe.toModel[RECORD, RESULT](model) match {                     // Inflate model
       case Some(md) => newModels += (model.dataType -> (model.name, md))  // Save a new model
-      case _ =>
+      case _ => println(s"WARNING: ModelToServe.toModel[RECORD, RESULT](model) failed to return a new model from $model")
     }
   }
 
-  // Serve data
+  /** Serve data; i.e., score records with the current model */
   override def flatMap1(record: DataToServe[RECORD], out: Collector[ServingResult[RESULT]]): Unit = {
-    // See if we need to update
-    newModels.contains(record.getType) match {    // There is a new model for this type
-      case true =>
-        currentModels.contains(record.getType) match {  // There is currently a model for this type
-          case true => currentModels(record.getType)._2.cleanup()  // Cleanup
-          case _ =>
-        }
-        // Update current models and remove a model from new models
-        currentModels += (record.getType -> newModels(record.getType))
-        newModels -= record.getType
-      case _ =>
+    // Exercise:
+    // See the exercise in `DataProcessorKeyed.processElement1`, which discusses keeping a stack of
+    // of models, rather than only one per key or partition in this case. Adapt that idea here.
+
+    // See if we need to update the current model first...
+    if (newModels.contains(record.getType)) {    // There is a new model for this type
+      // Get the current model, if there is one, and clean it up.
+      // If you're not familiar with Scala, the idiom map.get(key).map(do_something) works like this:
+      //   map.get(key)        // returns either a None (no item) or Some(existing_model).
+      //   .map(do_something)  // does nothing if None was returned. If Some(existing_model) was returned,
+      //                       // applies (do_something) function to the existing_model (cleanup, in our case)
+      currentModels.get(record.getType).map(m => m._2.cleanup())
+
+      // Now update the current models with the new model for the record type
+      // and remove the new model from new models temporary placeholder.
+      currentModels += (record.getType -> newModels(record.getType))
+      newModels -= record.getType
     }
-    // actually process
+
+    // Actually score the record
     currentModels.get(record.getType) match {
       case Some(model) =>
         val start = System.currentTimeMillis()
-        // Actual serving
-        val result = model._2.score(record.getRecord)
+        val score = model._2.score(record.getRecord)
         val duration = System.currentTimeMillis() - start
-        // write result out
-        out.collect(ServingResult[RESULT](model._1, record.getType, record.getRecord.asInstanceOf[WineRecord].ts, result))
-      case _ =>
+
+        val result = ServingResult[RESULT](model._1, record.getType, record.getRecord.asInstanceOf[WineRecord].ts, score)
+        //        println(result)
+        out.collect(result)
+      case _ => // Exercise: print/log when a matching model wasn't found. Does the output make sense?
     }
   }
 }
+
+object DataProcessorMap{
+  def apply[RECORD, RESULT]() = new DataProcessorMap[RECORD, RESULT]
+}
+

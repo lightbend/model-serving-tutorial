@@ -15,17 +15,15 @@
 
 package com.lightbend.modelserving.spark
 
-/**
-  * Kryo serializer for model state
-  */
-
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 import com.lightbend.model.winerecord.WineRecord
 import com.lightbend.modelserving.model.ModelFactoryResolver
 import org.apache.spark.serializer.KryoRegistrator
 
-
+/**
+  * Kryo serializer for model state
+  */
 class ModelStateSerializerKryo extends Serializer[ModelState]{
 
   super.setAcceptsNull(false)
@@ -40,8 +38,8 @@ class ModelStateSerializerKryo extends Serializer[ModelState]{
     * This method should not be called directly, instead this serializer can be passed to {@link Kryo} read methods that accept a
     * serialier.
     *
-    * @return May be null if { @link #getAcceptsNull()} is true. */
-
+    * @return May be null if { @link #getAcceptsNull()} is true.
+    */
   override def read(kryo: Kryo, input: Input, `type`: Class[ModelState]): ModelState = {
     import ModelStateSerializerKryo._
 
@@ -74,8 +72,8 @@ class ModelStateSerializerKryo extends Serializer[ModelState]{
     * This method should not be called directly, instead this serializer can be passed to {@link Kryo} write methods that accept a
     * serialier.
     *
-    * @param value May be null if { @link #getAcceptsNull()} is true. */
-
+    * @param value May be null if { @link #getAcceptsNull()} is true.
+    */
   override def write(kryo: Kryo, output: Output, value: ModelState): Unit = {
     val start = System.currentTimeMillis()
     output.writeLong(value.name.length)

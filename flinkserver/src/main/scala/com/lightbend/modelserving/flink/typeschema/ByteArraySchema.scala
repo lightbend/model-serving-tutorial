@@ -19,7 +19,7 @@ import org.apache.flink.api.common.serialization.{DeserializationSchema, Seriali
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.typeutils.TypeExtractor
 
-// Byte Array Serialization schema used for Kafka messaging
+/** Byte Array Serialization schema used for Kafka messaging */
 class ByteArraySchema extends DeserializationSchema[Array[Byte]] with SerializationSchema[Array[Byte]] {
 
   private val serialVersionUID: Long = 1234567L

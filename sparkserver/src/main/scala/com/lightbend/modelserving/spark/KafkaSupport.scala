@@ -20,6 +20,7 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer
 
 
 /**
+  * Encapsulate Kafka configuration information.
   * Created by blublins on 9/7/16.
   */
 @SerialVersionUID(102L)

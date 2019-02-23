@@ -36,17 +36,19 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.streaming.api.scala._
 
 /**
-  * loosely based on http://dataartisans.github.io/flink-training/exercises/eventTimeJoin.html approach
-  * for queriable state
+  * Queryable state implementation loosely based on this approach from data Artisans (now Ververica):
+  * http://dataartisans.github.io/flink-training/exercises/eventTimeJoin.html
+  * See also this README:
   *   https://github.com/dataArtisans/flink-queryable_state_demo/blob/master/README.md
-  * Using Flink min server to enable Queryable data access
+  * See also this class as an example of a Flink server to enable Queryable data access:
   *   see https://github.com/dataArtisans/flink-queryable_state_demo/blob/master/src/main/java/com/dataartisans/queryablestatedemo/EventCountJob.java
   *
-  * This little application is based on a RichCoProcessFunction which works on a keyed streams. It is applicable
+  * This little application is based on a RichCoProcessFunction that works on a keyed streams. It is applicable
   * when a single applications serves multiple different models for different data types. Every model is keyed with
-  * the type of data what it is designed for. Same key should be present in the data, if it wants to use a specific
+  * the type of data that it is designed for. The same key must be present in the data, if it wants to use a specific
   * model.
-  * Scaling of the application is based on the data type - for every key there is a separate instance of the
+  *
+  * Scaling of the application is based on the data type; for every key there is a separate instance of the
   * RichCoProcessFunction dedicated to this type. All messages of the same type are processed by the same instance
   * of RichCoProcessFunction
   */
@@ -68,7 +70,7 @@ object ModelServingKeyedJob {
     executeServer(idFileName)
   }
 
-  // Execute on the local Flink server - to test queryable state
+  /** Execute on the local Flink server - to test queryable state */
   def executeServer(idFileName: String) : Unit = {
 
     // We use a mini cluster here for sake of simplicity, because I don't want
@@ -117,7 +119,7 @@ object ModelServingKeyedJob {
     }
   }
 
-  // Build execution Graph
+  /** Build the execution Graph */
   def buildGraph(env : StreamExecutionEnvironment) : Unit = {
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
     env.enableCheckpointing(5000)

@@ -23,9 +23,8 @@ import org.apache.flink.api.common.typeutils._
 import org.apache.flink.core.memory.{DataInputView, DataOutputView}
 import org.apache.flink.util.InstantiationUtil
 
-// Type serializer for model
+/** Serializer for the model type */
 class ModelTypeSerializer[RECORD, RESULT] extends TypeSerializer[Option[Model[RECORD, RESULT]]] {
-
 
   override def createInstance(): Option[Model[RECORD, RESULT]] = None
 
@@ -101,8 +100,10 @@ object ModelSerializerConfigSnapshot{
   val CURRENT_VERSION = 1
 }
 
-// Snapshot configuration Model serializer
-// See https://github.com/apache/flink/blob/master/flink-core/src/main/java/org/apache/flink/api/common/typeutils/SimpleTypeSerializerSnapshot.java
+/**
+  * Snapshot configuration Model serializer
+  * See https://github.com/apache/flink/blob/master/flink-core/src/main/java/org/apache/flink/api/common/typeutils/SimpleTypeSerializerSnapshot.java
+  */
 class ModelSerializerConfigSnapshot[RECORD, RESULT] extends TypeSerializerSnapshot[Option[Model[RECORD, RESULT]]]{
 
   import ModelSerializerConfigSnapshot._

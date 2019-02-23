@@ -26,6 +26,7 @@ import org.apache.curator.test.TestingServer
 import org.slf4j.LoggerFactory
 import com.github.ghik.silencer.silent
 
+/** A convenience utility for running a local, single instance of Kafka. */
 class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: ZooKeeperLocalServer) {
 
   import KafkaLocalServer._
@@ -154,6 +155,7 @@ object KafkaLocalServer {
   }
 }
 
+/** A convenience utility for running a local, single instance of ZooKeeper. */
 private class ZooKeeperLocalServer(port: Int, cleanOnStart: Boolean) {
 
   import KafkaLocalServer._

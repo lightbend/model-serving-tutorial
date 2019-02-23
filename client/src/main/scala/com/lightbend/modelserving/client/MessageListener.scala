@@ -18,6 +18,7 @@ package com.lightbend.modelserving.client
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 
+/** Read messages from Kafka. */
 object MessageListener {
   private val AUTOCOMMITINTERVAL = "1000" // Frequency off offset commits
   private val SESSIONTIMEOUT = "30000"    // The timeout used to detect failures - should be greater then processing time
@@ -42,8 +43,14 @@ object MessageListener {
     new MessageListener[K, V](brokers, topic, group, classOf[ByteArrayDeserializer].getName, classOf[ByteArrayDeserializer].getName, processor)
 }
 
-class MessageListener[K, V](brokers: String, topic: String, group: String, keyDeserealizer: String, valueDeserealizer: String,
-                            processor: RecordProcessorTrait[K, V]) extends Runnable {
+/** Read messages from Kafka. */
+class MessageListener[K, V](
+  brokers: String,
+  topic: String,
+  group: String,
+  keyDeserealizer: String,
+  valueDeserealizer: String,
+  processor: RecordProcessorTrait[K, V]) extends Runnable {
 
   import MessageListener._
 

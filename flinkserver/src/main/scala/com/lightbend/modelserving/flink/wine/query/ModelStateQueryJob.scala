@@ -18,7 +18,7 @@ package com.lightbend.modelserving.flink.wine.query
 import com.lightbend.modelserving.flink.query.ModelStateQuery
 
 /**
-  * ModelStateQueryJob - query model state (works only for keyed implementation).
+  * ModelStateQueryJob - query the model state (works only for the keyed implementation).
   */
 object ModelStateQueryJob {
 

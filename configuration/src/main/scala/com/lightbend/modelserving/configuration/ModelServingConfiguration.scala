@@ -16,6 +16,7 @@
 package com.lightbend.modelserving.configuration
 
 /**
+  * Various configuration parameters.
   * Created by boris on 5/10/17.
   */
 object ModelServingConfiguration {

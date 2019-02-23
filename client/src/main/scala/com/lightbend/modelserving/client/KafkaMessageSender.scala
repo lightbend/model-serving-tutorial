@@ -15,16 +15,15 @@
 
 package com.lightbend.modelserving.client
 
-/**
- * Created by boris on 5/10/17.
- * Byte array sender to Kafka
- */
-
 import java.util.Properties
 
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
 import org.apache.kafka.common.serialization.ByteArraySerializer
 
+/**
+  * Sends byte arrays to Kafka.
+  * Created by boris on 5/10/17.
+  */
 object MessageSender {
   private val ACKCONFIGURATION = "all" // Blocking on the full commit of the record
   private val RETRYCOUNT = "1" // Number of retries on put
@@ -49,6 +48,7 @@ object MessageSender {
     new MessageSender(brokers)
 }
 
+/** Sends byte arrays to Kafka. */
 class MessageSender(val brokers: String) {
 
   import MessageSender._

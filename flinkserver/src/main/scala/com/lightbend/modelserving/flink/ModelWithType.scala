@@ -17,7 +17,7 @@ package com.lightbend.modelserving.flink
 
 import com.lightbend.modelserving.model.Model
 
-// Used for Flink checkpointing
+/** Used for Flink checkpointing */
 class ModelWithType[RECORD, RESULT](current : Boolean, dType: String, model: (String,Model[RECORD, RESULT])) {
 
   val isCurrent = current
