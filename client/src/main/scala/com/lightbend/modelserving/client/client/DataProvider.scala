@@ -78,7 +78,7 @@ object DataProvider {
         sender.writeValue(DATA_TOPIC, bos.toByteArray)
         nrec = nrec + 1
         if (nrec % 10 == 0)
-          println(s"printed $nrec records")
+          println(s"wrote $nrec records")
         pause(dataTimeInterval)
       })
     }

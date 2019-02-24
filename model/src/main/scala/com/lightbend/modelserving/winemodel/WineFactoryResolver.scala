@@ -26,15 +26,9 @@ import com.lightbend.modelserving.winemodel.tensorflow.{WineTensorFlowBundledMod
   */
 object WineFactoryResolver extends ModelFactoryResolver[WineRecord, Double]{
 
-  private val factories = Map(ModelDescriptor.ModelType.PMML -> WinePMMLModel,
-                              ModelDescriptor.ModelType.TENSORFLOW -> WineTensorFlowModel,
-                              ModelDescriptor.ModelType.TENSORFLOWSAVED -> WineTensorFlowBundledModel)
+  private val factories = Map(ModelDescriptor.ModelType.PMML.value -> WinePMMLModel,
+                              ModelDescriptor.ModelType.TENSORFLOW.value -> WineTensorFlowModel,
+                              ModelDescriptor.ModelType.TENSORFLOWSAVED.value -> WineTensorFlowBundledModel)
 
-  override def getFactory(whichFactory: Int): Option[ModelFactory[WineRecord, Double]] =
-    factories.keySet.find(_.value == whichFactory) match {
-      case None => println(s"WARNING: Could not a model factory for integer value $whichFactory"); None
-      case Some(key) => factories.get(key)
-    }
-
-  override def getFactory(whichFactory: ModelDescriptor.ModelType): Option[ModelFactory[WineRecord, Double]] = factories.get(whichFactory)
+  override def getFactory(whichFactory: Int): Option[ModelFactory[WineRecord, Double]] = factories.get(whichFactory)
 }

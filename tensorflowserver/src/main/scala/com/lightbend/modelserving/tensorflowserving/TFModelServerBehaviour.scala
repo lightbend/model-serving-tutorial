@@ -71,6 +71,18 @@ class TFModelServerBehaviour(context: ActorContext[TFModelServerActor]) extends 
         val request = Request("predict", Seq(input).toArray)
 
         // Post request
+        //
+        // Exercise:
+        // When you run this application {@link TFServingModelServer}, note how long it takes to score records. You should
+        // see the times start out fairly large, 100s-1000s of milliseconds, then drop to ~5-100 milliseconds.
+        // Recall the example `curl` command in the project README looked something like this:
+        //   curl -X POST url -d '{...,"instances":[{"inputs":[...]}]}'
+        // Note that you pass a JSON array of "instances". Try modifying the code to pass several records at a time,
+        // rather than one at a time. How long does the block take to be scored, compared to the same number of individual
+        // invocations? You can modify the time duration logic below to either cover the invocation of the web service or
+        // "start the clock" when a first message for a block arrives. The latter takes into account the delay we are
+        // imposing while we wait for a block's work of records to arrive.
+        //
         // Exercise:
         // One potential problem with the following code is that it uses default connection pool settings,
         // such as the maximum number of retries, etc. This is controlled by a default value for the argument
@@ -78,6 +90,7 @@ class TFModelServerBehaviour(context: ActorContext[TFModelServerActor]) extends 
         // if you need tighter control, you can pass your own `ConnectionPoolSettings` object with non-default behavior.
         // To see what to try, select `singleRequest` and use <command>-b (Mac) or <control>-b (Windows & Linux) to
         // navigate to the implementation and then to the `ConnectionPoolSettings` object.
+
         val start = System.currentTimeMillis()
         val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(
           method = HttpMethods.POST,

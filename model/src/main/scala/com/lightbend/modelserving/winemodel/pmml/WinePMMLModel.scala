@@ -22,7 +22,8 @@ import com.lightbend.modelserving.model.{Model, ModelFactory}
 import com.lightbend.modelserving.model.ModelToServe
 import org.jpmml.evaluator.Computable
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+
 import scala.collection._
 
 /**
@@ -35,12 +36,12 @@ class WinePMMLModel(inputStream: Array[Byte]) extends PMMLModel[WineRecord, Doub
     // Clear arguments (from previous run)
     arguments.clear()
     // Populate input based on record
-    inputFields.foreach(field => {
+    inputFields.asScala.foreach(field => {
       arguments.put(field.getName, field.prepare(getValueByName(input, field.getName.getValue)))
     })
 
     // Calculate Output
-    val result = evaluator.evaluate(arguments)
+    val result = evaluator.evaluate(arguments.asJava)
 
     // Prepare output
     result.get(tname) match {

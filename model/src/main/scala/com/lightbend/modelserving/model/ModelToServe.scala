@@ -36,8 +36,8 @@ object ModelToServe {
   def fromByteArray(message: Array[Byte]): Try[ModelToServe] = Try{
     val m = ModelDescriptor.parseFrom(message)
     m.messageContent.isData match {
-      case true => new ModelToServe(m.name, m.description, m.modeltype, m.getData.toByteArray, null, m.dataType)
-      case _ => new ModelToServe(m.name, m.description, m.modeltype, Array[Byte](), m.getLocation, m.dataType)
+      case true => new ModelToServe(m.name, m.description, m.modeltype.value, m.getData.toByteArray, null, m.dataType)
+      case _ => new ModelToServe(m.name, m.description, m.modeltype.value, Array[Byte](), m.getLocation, m.dataType)
     }
   }
 
@@ -65,7 +65,7 @@ object ModelToServe {
     from match {
       case Some(model) =>
         validateResolver()
-        Some(resolver.getFactory(model.getType).get.restore(model.toBytes()).asInstanceOf[Model[RECORD,RESULT]])
+        Some(resolver.getFactory(model.getType.value).get.restore(model.toBytes()).asInstanceOf[Model[RECORD,RESULT]])
       case _ => None
     }
   }
@@ -73,7 +73,7 @@ object ModelToServe {
   /** Restore model of the specified ModelType from a byte array */
   def restore[RECORD,RESULT](t : ModelDescriptor.ModelType, content : Array[Byte]): Option[Model[RECORD,RESULT]] = {
     validateResolver()
-    Some(resolver.getFactory(t).get.restore(content).asInstanceOf[Model[RECORD,RESULT]])
+    Some(resolver.getFactory(t.value).get.restore(content).asInstanceOf[Model[RECORD,RESULT]])
   }
 
   /** Restore model of the specified ModelType value from a byte array */
@@ -100,11 +100,15 @@ object ModelToServe {
 
 /**
   * Encapsulates a model to serve along with some metadata about it.
+  * Using an Int for the modelType, instead of a ModelDescriptor.ModelType, which is what it represents, is
+  * unfortunately necessary because otherwise you can't use these objects in Spark UDFs; you get a Scala Reflection
+  * exception at runtime. Hence, the integration values for modelType should match the known integer values in the
+  * ModelType objects. See also protobufs/src/main/protobuf/modeldescriptor.proto
   */
 case class ModelToServe(
   name: String,
   description: String,
-  modelType: ModelDescriptor.ModelType,
+  modelType: Int,
   model : Array[Byte],
   location : String,
   dataType : String)
@@ -116,7 +120,7 @@ case class ModelToServe(
 case class ModelToServeStats(
   name: String = "",
   description: String = "",
-  modelType: ModelDescriptor.ModelType = ModelDescriptor.ModelType.PMML,
+  modelType: Int = ModelDescriptor.ModelType.PMML.value,
   since: Long = 0,
   var usage: Long = 0,
   var duration: Double = .0,

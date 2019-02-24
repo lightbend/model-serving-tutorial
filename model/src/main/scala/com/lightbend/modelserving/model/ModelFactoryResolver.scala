@@ -28,7 +28,4 @@ import com.lightbend.model.modeldescriptor.ModelDescriptor
 trait ModelFactoryResolver[RECORD, RESULT] {
   /** Retrieve the model using an Int corresponding to the ModelType.value field */
   def getFactory(whichFactory: Int) : Option[ModelFactory[RECORD, RESULT]]
-
-  /** Retrieve the model using the ModelType */
-  def getFactory(whichFactory: ModelDescriptor.ModelType) : Option[ModelFactory[RECORD, RESULT]]
 }

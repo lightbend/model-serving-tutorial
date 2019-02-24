@@ -22,10 +22,9 @@ import com.lightbend.modelserving.winemodel.WineFactoryResolver
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.{GroupState, GroupStateTimeout, StreamingQueryListener, Trigger}
-import org.apache.spark.sql.{Encoders, SparkSession}
+import org.apache.spark.sql.{Encoder, Encoders, SparkSession}
 
 import scala.collection.mutable.ListBuffer
-
 import scala.collection.JavaConverters._
 
 /**
@@ -33,7 +32,7 @@ import scala.collection.JavaConverters._
   */
 object SparkStructuredModelServer {
 
-  implicit val modelStateEncoder  = Encoders.kryo[ModelState]
+  implicit val modelStateEncoder: Encoder[ModelState] = Encoders.kryo[ModelState]
 
   import ModelServingConfiguration._
 
@@ -58,9 +57,9 @@ object SparkStructuredModelServer {
     ModelStateSerializerKryo.setResolver(WineFactoryResolver)
 
     // Message parsing:
-    // In order to be able to uninon both streams we are using a combined format
-    sparkSession.udf.register("deserializeData",  (data: Array[Byte]) => DataWithModel.dataFromByteArrayStructured(data))
-    sparkSession.udf.register("deserializeModel", (data: Array[Byte]) => DataWithModel.modelFromByteArrayStructured(data))
+    // In order to be able to union both streams we are using a combined format
+    sparkSession.udf.register[DataWithModel, Array[Byte]]("deserializeData",  (data: Array[Byte]) => DataWithModel.dataFromByteArrayStructured(data))
+    sparkSession.udf.register[DataWithModel, Array[Byte]]("deserializeModel", (data: Array[Byte]) => DataWithModel.modelFromByteArrayStructured(data))
 
     // Create query listener
     val queryListener = new StreamingQueryListener {
