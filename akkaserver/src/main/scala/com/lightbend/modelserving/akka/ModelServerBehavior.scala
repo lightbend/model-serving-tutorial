@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.akka
@@ -22,7 +21,8 @@ import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext}
 import com.lightbend.model.winerecord.WineRecord
 import com.lightbend.modelserving.model.{Model, ModelToServe, ModelToServeStats, ServingResult}
 
-class ModelServerBehaviour(context: ActorContext[ModelServerActor], dataType : String) extends AbstractBehavior[ModelServerActor] {
+/** Akka Typed Actor for handling a single model, including updates to it and scoring with it. */
+class ModelServerBehavior(context: ActorContext[ModelServerActor], dataType : String) extends AbstractBehavior[ModelServerActor] {
 
   println(s"Creating a new Model Server for data type $dataType")
 
@@ -33,13 +33,13 @@ class ModelServerBehaviour(context: ActorContext[ModelServerActor], dataType : S
 
   override def onMessage(msg: ModelServerActor): Behavior[ModelServerActor] = {
     msg match {
-      case model : ModelUpdate => // Update Model
+      case model : UpdateModel => // Update Model
         // Update model
         println(s"Updated model: ${model.model}")
-        newState = Some(new ModelToServeStats(model.model))
+        newState = Some(ModelToServeStats(model.model))
         newModel = ModelToServe.toModel(model.model)
         model.reply ! Done
-      case record : ServeData => // Serve data
+      case record : ScoreData => // Serve data
         // See if we have update for the model
         newModel.foreach { model =>
           // close current model first

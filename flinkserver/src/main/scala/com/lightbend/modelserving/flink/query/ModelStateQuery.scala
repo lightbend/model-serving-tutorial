@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.flink.query
@@ -25,7 +24,7 @@ import org.apache.flink.queryablestate.client.QueryableStateClient
 import org.joda.time.DateTime
 
 /**
-  * ModelStateQuery - query model state (works only for keyed implementation).
+  * ModelStateQuery - query model state (works only for the keyed implementation).
   */
 object ModelStateQuery {
 
@@ -33,8 +32,7 @@ object ModelStateQuery {
   val defaulttimeInterval = 1000 * 20        // 20 sec
 
   /**
-    * Main method. When using make sure that you set job ID correctly
-    *
+    * Invoke the query. Make sure you set the job ID correctly when invoking.
     */
   def query(job: String, keys: Seq[String], host: String = "127.0.0.1", port: Int = 9069,
             timeInterval: Long=defaulttimeInterval): Unit = {

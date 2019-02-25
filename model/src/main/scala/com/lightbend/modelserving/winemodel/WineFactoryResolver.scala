@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.winemodel
@@ -22,12 +21,14 @@ import com.lightbend.modelserving.model.{ModelFactory, ModelFactoryResolver}
 import com.lightbend.modelserving.winemodel.pmml.WinePMMLModel
 import com.lightbend.modelserving.winemodel.tensorflow.{WineTensorFlowBundledModel, WineTensorFlowModel}
 
-// Model factory resolver - requires specific factories
+/**
+  * Model factory resolver - requires specific factories
+  */
 object WineFactoryResolver extends ModelFactoryResolver[WineRecord, Double]{
 
   private val factories = Map(ModelDescriptor.ModelType.PMML.value -> WinePMMLModel,
                               ModelDescriptor.ModelType.TENSORFLOW.value -> WineTensorFlowModel,
                               ModelDescriptor.ModelType.TENSORFLOWSAVED.value -> WineTensorFlowBundledModel)
 
-  override def getFactory(`type`: Int): Option[ModelFactory[WineRecord, Double]] = factories.get(`type`)
+  override def getFactory(whichFactory: Int): Option[ModelFactory[WineRecord, Double]] = factories.get(whichFactory)
 }

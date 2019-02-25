@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of flink-ModelServing
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * flink-ModelServing is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.client
@@ -19,6 +18,7 @@ package com.lightbend.modelserving.client
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 
+/** Read messages from Kafka. */
 object MessageListener {
   private val AUTOCOMMITINTERVAL = "1000" // Frequency off offset commits
   private val SESSIONTIMEOUT = "30000"    // The timeout used to detect failures - should be greater then processing time
@@ -43,8 +43,14 @@ object MessageListener {
     new MessageListener[K, V](brokers, topic, group, classOf[ByteArrayDeserializer].getName, classOf[ByteArrayDeserializer].getName, processor)
 }
 
-class MessageListener[K, V](brokers: String, topic: String, group: String, keyDeserealizer: String, valueDeserealizer: String,
-                            processor: RecordProcessorTrait[K, V]) extends Runnable {
+/** Read messages from Kafka. */
+class MessageListener[K, V](
+  brokers: String,
+  topic: String,
+  group: String,
+  keyDeserealizer: String,
+  valueDeserealizer: String,
+  processor: RecordProcessorTrait[K, V]) extends Runnable {
 
   import MessageListener._
 

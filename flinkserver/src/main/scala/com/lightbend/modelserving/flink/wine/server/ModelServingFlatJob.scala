@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.flink.wine.server
@@ -36,19 +35,19 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.streaming.api.scala._
 
 /**
-  * loosely based on http://dataartisans.github.io/flink-training/exercises/eventTimeJoin.html approach
-  * for queriable state
+  * Queryable state implementation loosely based on this approach from data Artisans (now Ververica):
+  * http://dataartisans.github.io/flink-training/exercises/eventTimeJoin.html
+  * See also this README:
   *   https://github.com/dataArtisans/flink-queryable_state_demo/blob/master/README.md
-  * Using Flink min server to enable Queryable data access
+  * See also this class as an example of a Flink server to enable Queryable data access:
   *   see https://github.com/dataArtisans/flink-queryable_state_demo/blob/master/src/main/java/com/dataartisans/queryablestatedemo/EventCountJob.java
   *
-  * This little application is based on a RichCoFlatMapFunction which works on a non keyed streams. It is
-  * applicable when a single applications serves a single model(model set) for a single data type.
-  * Scaling of the application is based on the parallelism of input stream and RichCoFlatMapFunction.
-  * The model is broadcasted to all RichCoFlatMapFunction instances. The messages are processed by different
+  * This little application is based on a RichCoFlatMapFunction that works on non-keyed streams. It is
+  * applicable when a single application serves a single model (model set) for a single data type.
+  * Scaling of the application is based on the parallelism of the input stream and RichCoFlatMapFunction.
+  * The model is broadcast to all RichCoFlatMapFunction instances. The messages are processed by different
   * instances of RichCoFlatMapFunction in a round-robin fashion.
   */
-
 object ModelServingFlatJob {
 
   import ModelServingConfiguration._
@@ -57,7 +56,7 @@ object ModelServingFlatJob {
     executeServer()
   }
 
-  // Execute on the local Flink server - to test queariable state
+  /** Execute on the local Flink server - to test queariable state */
   def executeServer() : Unit = {
 
     // We use a mini cluster here for sake of simplicity, because I don't want
@@ -94,7 +93,7 @@ object ModelServingFlatJob {
     }
   }
 
-  // Build execution Graph
+  /** Build the execution Graph */
   def buildGraph(env : StreamExecutionEnvironment) : Unit = {
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
     env.enableCheckpointing(5000)

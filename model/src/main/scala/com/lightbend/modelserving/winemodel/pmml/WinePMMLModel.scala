@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.winemodel.pmml
@@ -23,23 +22,26 @@ import com.lightbend.modelserving.model.{Model, ModelFactory}
 import com.lightbend.modelserving.model.ModelToServe
 import org.jpmml.evaluator.Computable
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+
 import scala.collection._
 
-// PMML model implementation for wine data
+/**
+  * PMML model implementation for wine data.
+  */
 class WinePMMLModel(inputStream: Array[Byte]) extends PMMLModel[WineRecord, Double](inputStream) {
 
-  // Scoring (using PMML evaluator)
+  /** Scoring (using PMML evaluator) */
   override def score(input: WineRecord): Double = {
     // Clear arguments (from previous run)
     arguments.clear()
     // Populate input based on record
-    inputFields.foreach(field => {
+    inputFields.asScala.foreach(field => {
       arguments.put(field.getName, field.prepare(getValueByName(input, field.getName.getValue)))
     })
 
-    // Calculate Output// Calculate Output
-    val result = evaluator.evaluate(arguments)
+    // Calculate Output
+    val result = evaluator.evaluate(arguments.asJava)
 
     // Prepare output
     result.get(tname) match {
@@ -59,7 +61,9 @@ class WinePMMLModel(inputStream: Array[Byte]) extends PMMLModel[WineRecord, Doub
   }
 }
 
-// Factory for wine data PMML model
+/**
+  * Factory for wine data PMML model
+  */
 object WinePMMLModel extends ModelFactory[WineRecord, Double]{
   private val names = Map("fixed acidity" -> 0,
     "volatile acidity" -> 1,"citric acid" ->2,"residual sugar" -> 3,

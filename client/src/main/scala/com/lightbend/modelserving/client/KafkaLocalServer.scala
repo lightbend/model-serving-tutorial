@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of flink-ModelServing
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * flink-ModelServing is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.client
@@ -25,12 +24,15 @@ import kafka.utils.ZkUtils
 import org.apache.commons.io.FileUtils
 import org.apache.curator.test.TestingServer
 import org.slf4j.LoggerFactory
+import com.github.ghik.silencer.silent
 
+/** A convenience utility for running a local, single instance of Kafka. */
 class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: ZooKeeperLocalServer) {
 
   import KafkaLocalServer._
 
   private var broker = null.asInstanceOf[KafkaServerStartable]
+  @silent
   private var zkUtils : ZkUtils =
     ZkUtils.apply(s"localhost:${zooKeeperServer.getPort()}", DEFAULT_ZK_SESSION_TIMEOUT_MS, DEFAULT_ZK_CONNECTION_TIMEOUT_MS, false)
 
@@ -153,6 +155,7 @@ object KafkaLocalServer {
   }
 }
 
+/** A convenience utility for running a local, single instance of ZooKeeper. */
 private class ZooKeeperLocalServer(port: Int, cleanOnStart: Boolean) {
 
   import KafkaLocalServer._

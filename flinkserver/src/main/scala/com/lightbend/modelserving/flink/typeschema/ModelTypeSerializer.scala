@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.flink.typeschema
@@ -24,9 +23,8 @@ import org.apache.flink.api.common.typeutils._
 import org.apache.flink.core.memory.{DataInputView, DataOutputView}
 import org.apache.flink.util.InstantiationUtil
 
-// Type serializer for model
+/** Serializer for the model type */
 class ModelTypeSerializer[RECORD, RESULT] extends TypeSerializer[Option[Model[RECORD, RESULT]]] {
-
 
   override def createInstance(): Option[Model[RECORD, RESULT]] = None
 
@@ -39,7 +37,7 @@ class ModelTypeSerializer[RECORD, RESULT] extends TypeSerializer[Option[Model[RE
       case Some(model) =>
         target.writeBoolean(true)
         val content = model.toBytes()
-        target.writeLong(model.getType)
+        target.writeLong(model.getType.value.toLong)
         target.writeLong(content.length)
         target.write(content)
       case _ => target.writeBoolean(false)
@@ -102,8 +100,10 @@ object ModelSerializerConfigSnapshot{
   val CURRENT_VERSION = 1
 }
 
-// Snapshot configuration Model serializer
-// See https://github.com/apache/flink/blob/master/flink-core/src/main/java/org/apache/flink/api/common/typeutils/SimpleTypeSerializerSnapshot.java
+/**
+  * Snapshot configuration Model serializer
+  * See https://github.com/apache/flink/blob/master/flink-core/src/main/java/org/apache/flink/api/common/typeutils/SimpleTypeSerializerSnapshot.java
+  */
 class ModelSerializerConfigSnapshot[RECORD, RESULT] extends TypeSerializerSnapshot[Option[Model[RECORD, RESULT]]]{
 
   import ModelSerializerConfigSnapshot._

@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.spark.server
@@ -32,10 +31,9 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
 import scala.collection._
 
 /**
-  * Implementation of Model serving using Spark Structured Streaming server with near-real time support,
+  * Implementation of Model serving using a Spark Structured Streaming server with near-real time support,
   * using Spark's "continuous processing" engine.
   */
-
 object SparkStructuredStateModelServer {
 
   import ModelServingConfiguration._
@@ -116,7 +114,8 @@ object SparkStructuredStateModelServer {
           .map(ModelToServe.fromByteArray(_)).filter(_.isSuccess).map(_.get)
 
         // Stop the currently running Spark structured query, so that we can modify
-        // Model's, that are store in the driver
+        // Model's, that are stored in the driver. When we restart below, the new models will be
+        // serialized to the new tasks created for the restarted job.
         println("Stopping data query")
         dataQuery.stop
 
@@ -140,7 +139,7 @@ object SparkStructuredStateModelServer {
           currentModels(name) = value
         }}
 
-        // restart streaming query with new model's map
+        // Restart the streaming query with new models map.
         println("Starting data query")
         dataQuery = datastream
           .writeStream.outputMode("update")

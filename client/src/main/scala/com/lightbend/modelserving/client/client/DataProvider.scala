@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of flink-ModelServing
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * flink-ModelServing is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.client.client
@@ -30,9 +29,7 @@ import scala.concurrent.Future
 import scala.io.Source
 
 /**
- * Created by boris on 5/10/17.
- *
- * Application publishing models from /data directory to Kafka
+ * Application publishing models from /data directory to Kafka.
  */
 object DataProvider {
 
@@ -79,7 +76,7 @@ object DataProvider {
         sender.writeValue(DATA_TOPIC, bos.toByteArray)
         nrec = nrec + 1
         if (nrec % 10 == 0)
-          println(s"printed $nrec records")
+          println(s"wrote $nrec records")
         pause(dataTimeInterval)
       })
     }

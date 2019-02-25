@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.akka
@@ -35,6 +34,7 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import scala.concurrent.duration._
 import scala.util.Success
 
+/** Entry point for the Akka Server example. */
 object AkkaModelServer {
 
   import ModelServingConfiguration._
@@ -49,12 +49,13 @@ object AkkaModelServer {
   implicit val executionContext = modelServerManager.executionContext
   implicit val askTimeout = Timeout(30.seconds)
 
-  // Sources
+  /** Kafka topic configuration for the data records source. */
   val dataSettings = ConsumerSettings(modelServerManager.toUntyped, new ByteArrayDeserializer, new ByteArrayDeserializer)
     .withBootstrapServers(KAFKA_BROKER)
     .withGroupId(DATA_GROUP)
     .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
 
+  /** Kafka topic configuration for the model parameters source. */
   val modelSettings = ConsumerSettings(modelServerManager.toUntyped, new ByteArrayDeserializer, new ByteArrayDeserializer)
     .withBootstrapServers(KAFKA_BROKER)
     .withGroupId(MODELS_GROUP)
@@ -70,13 +71,18 @@ object AkkaModelServer {
     // Model stream processing
     Consumer.atMostOnceSource(modelSettings, Subscriptions.topics(MODELS_TOPIC))
       .map(record => ModelToServe.fromByteArray(record.value)).collect { case Success(a) => a }
-      .via(ActorFlow.ask(1)(modelServerManager)((elem, replyTo : ActorRef[Done]) => new ModelUpdate(replyTo, elem)))
+      .via(ActorFlow.ask(1)(modelServerManager)((elem, replyTo : ActorRef[Done]) => new UpdateModel(replyTo, elem)))
       .runWith(Sink.ignore) // run the stream, we do not read the results directly
 
     // Data stream processing
+    // Exercise:
+    // You could try invoking the AkkaModelServer logic in bunches, rather than one at a time, although the change in
+    // overhead should be insignificant. To do this, you would collect windows of events (see this blog post for ideas:
+    // https://softwaremill.com/windowing-data-in-akka-streams/), then modify the the other actors in this project to accept
+    // those windows instead of single records. This may not have much useful impact for this application, however.
     Consumer.atMostOnceSource(dataSettings, Subscriptions.topics(DATA_TOPIC))
       .map(record => DataRecord.fromByteArray(record.value)).collect { case Success(a) => a }
-      .via(ActorFlow.ask(1)(modelServerManager)((elem, replyTo : ActorRef[Option[ServingResult[Double]]]) => new ServeData(replyTo, elem)))
+      .via(ActorFlow.ask(1)(modelServerManager)((elem, replyTo : ActorRef[Option[ServingResult[Double]]]) => new ScoreData(replyTo, elem)))
       .collect{ case (Some(result)) => result}
       .runWith(Sink.foreach(result =>
         println(s"Model serving in ${System.currentTimeMillis() - result.duration} ms, with result ${result.result} " +

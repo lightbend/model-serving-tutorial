@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.model.PMML
@@ -28,8 +27,10 @@ import org.jpmml.model.PMMLUtil
 
 import scala.collection._
 
-// Abstract class for any PMML model processing. It has to be extended by the user
-// implement score method, based on his own model. Serializability here is required for Spark
+/**
+  * Abstract class for any PMML model processing. It has to be extended by the user
+  * implement score method, based on his own model. Serializability here is required for Spark
+  */
 abstract class PMMLModel[RECORD,RESULT](inputStream: Array[Byte]) extends Model[RECORD,RESULT] with Serializable {
 
   var arguments : mutable.Map[FieldName, FieldValue] = _
@@ -61,7 +62,7 @@ abstract class PMMLModel[RECORD,RESULT](inputStream: Array[Byte]) extends Model[
 
   override def toBytes : Array[Byte] = bytes
 
-  override def getType: Long = ModelDescriptor.ModelType.PMML.value
+  override def getType: ModelDescriptor.ModelType = ModelDescriptor.ModelType.PMML
 
   override def equals(obj: Any): Boolean = {
     obj match {
@@ -99,7 +100,7 @@ object PMMLModelBase{
   // List of PMML optimizers (https://groups.google.com/forum/#!topic/jpmml/rUpv8hOuS3A)
   private val optimizers = Array(new ExpressionOptimizer, new FieldOptimizer, new PredicateOptimizer, new GeneralRegressionModelOptimizer, new NaiveBayesModelOptimizer, new RegressionModelOptimizer)
 
-  // OPtimize PMML model
+  /** Optimize a PMML model */
   def optimize(pmml : PMML) = this.synchronized {
     optimizers.foreach(opt =>
       try {

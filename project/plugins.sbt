@@ -13,12 +13,4 @@
  * limitations under the License.
  */
 
-package com.lightbend.modelserving.model
-
-/**
-  * Generic definition of a model factory
-  */
-trait ModelFactory[RECORD,RESULT] {
-  def create(input : ModelToServe) : Option[Model[RECORD,RESULT]]
-  def restore(bytes : Array[Byte]) : Model[RECORD,RESULT]
-}
+scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")

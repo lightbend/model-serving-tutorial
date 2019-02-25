@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,15 +11,25 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.model
 
-// Generic definition of the model
+import com.lightbend.model.modeldescriptor.ModelDescriptor
+
+/**
+  * Generic definition of a machine learning model
+  */
 trait Model [RECORD, RESULT]{
+  /** Score a record with the model */
   def score(input : RECORD) : RESULT
+
+  /** Abstraction for cleaning up resources */
   def cleanup() : Unit
+
+  /** Serialize the model to bytes */
   def toBytes() : Array[Byte]
-  def getType : Long
+
+  /** Get the type of model. */
+  def getType : ModelDescriptor.ModelType
 }

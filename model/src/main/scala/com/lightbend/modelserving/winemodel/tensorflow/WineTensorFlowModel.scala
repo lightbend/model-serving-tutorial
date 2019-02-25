@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2019  Lightbend
+ * Copyright (C) 2017-2019  Lightbend
  *
- * This file is part of ModelServing-tutorial
+ * This file is part of the Lightbend model-serving-tutorial (https://github.com/lightbend/model-serving-tutorial)
  *
- * ModelServing-tutorial is free software: you can redistribute it and/or modify
+ * The model-serving-tutorial is free software: you can redistribute it and/or modify
  * it under the terms of the Apache License Version 2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -11,7 +11,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.lightbend.modelserving.winemodel.tensorflow
@@ -22,11 +21,14 @@ import com.lightbend.modelserving.model.{Model, ModelFactory}
 import com.lightbend.modelserving.model.ModelToServe
 import org.tensorflow.Tensor
 
-// TensorFlow model implementation for wine data
+/**
+  * TensorFlow model implementation for wine data
+  */
 class WineTensorFlowModel(inputStream : Array[Byte]) extends TensorFlowModel[WineRecord, Double](inputStream) {
 
   import WineTensorFlowModel._
 
+  /** Score a wine record with the model */
   override def score(input: WineRecord): Double = {
 
     // Create input tensor
@@ -43,7 +45,7 @@ class WineTensorFlowModel(inputStream : Array[Byte]) extends TensorFlowModel[Win
   }
 }
 
-// Factory for wine data PMML model
+/** Factory for wine data PMML model */
 object WineTensorFlowModel extends  ModelFactory[WineRecord, Double] {
 
   def toTensor(record: WineRecord) : Tensor[_] = {

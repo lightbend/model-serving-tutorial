@@ -27,7 +27,7 @@ First, we will describe how to build and run the applications. Then we will disc
 
 The Java JDK v8 is required. If not already installed, see the instructions [here](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html). Newer versions of the JDK have not been tested.
 
-[SBT](https://www.scala-sbt.org/), the _de facto_ build tool for Scala is used to build the Scala code. You don't need to know much about SBT to use it for our purposes. The SBT build files are configured to download all the required dependencies. Go [here](https://www.scala-sbt.org/download.html) for installation instructions.
+[SBT](https://www.scala-sbt.org/), the _de facto_ build tool for Scala is used to build the Scala code. You don't need to know much about SBT to use it for our purposes. The SBT build files are configured to download all the required dependencies. Go [here](https://www.scala-sbt.org/download.html) for SBT installation instructions.
 
 We used [IntelliJ IDEA](https://www.jetbrains.com/idea/) for managing and building the code, which can drive SBT. The free Community Edition is sufficient. However, using IntelliJ isn't required. Any favorite IDE, such as Microsoft Visual Studio Code, or an editor environment will do, but you may need to run SBT in a separate command window.
 
@@ -75,7 +75,7 @@ The tutorial writes various files that you might want to delete once you're fini
 
 ```bash
 sbt clean
-rm -rf tmp checkpoints output
+rm -rf tmp checkpoints cpt output
 ```
 
 If you start the TensorFlow Serving Docker image described below, you'll want to clean it up when you're done:
@@ -88,6 +88,8 @@ docker rm tfserving_wine
 ## SBT Projects
 
 The SBT build is organized into several projects under the `root` project. There are four projects that illustrate model-serving techniques: `akkaserver`, `flinkserver`, `sparkserver`, `tensorflowserver`. There are four supporting projects: `client`, `configuration`, `model`, `protobufs`. Finally, the `data` directory contains all the data and models used. A data set for wine is used.
+
+> **Note:** Suggested exercises are embedded as code comments throughout the source code in the projects. Search for `// Exercise` to find them.
 
 ### Supporting Projects
 
@@ -117,8 +119,8 @@ This project uses a local, in-memory Kafka server that implements Kafka without 
 
 Two applications (i.e., classes with `main` methods) are provided in the `client` project:
 
-* [DataProvider.scala](client/src/main/scala/com/lightbend/modelserving/client/client/DataProvider.scala): Writes the data and model parameters to Kafka topics
-* [DataReader.scala](client/src/main/scala/com/lightbend/modelserving/client/client/DataReader.scala): Reads the Kafka topics to validate that messages are published correctly
+* [DataProvider.scala](client/src/main/scala/com/lightbend/modelserving/client/client/DataProvider.scala): Writes (publishes) the data and model parameters to Kafka topics
+* [DataReader.scala](client/src/main/scala/com/lightbend/modelserving/client/client/DataReader.scala): Reads (consumes) the entries in the Kafka topics to validate that messages are written correctly
 
 You'll need to run `DataProvider` when running any of the other apps. In IntelliJ, just left click on the file and pick `run`. Other IDEs work similarly.
 
@@ -145,7 +147,7 @@ sbt:model-serving-tutorial> client/runMain com.lightbend.modelserving.client.cli
 
 > **Notes:**
 >
-> 1. You will need one terminal for _each_ service executed concurrently
+> 1. You will need one terminal for _each_ service executed concurrently, when using SBT like this.
 > 2. When an app takes command-line arguments, simply append them to the `project/run` or `project/runMain ...` command
 
 ### Configuration
@@ -156,25 +158,24 @@ To make sure that the same Kafka brokers and topics are used across all implemen
 
 The `model` project incorporates the basic model and data operations. The implementation is split into two main parts:
 
-* generic implementation that does not depend on data and the wine model
-* specific implementation for the wine model
+* generic base classes and _traits_ that do not depend on the particular wine data and models
+* specific implementation for the wine example
 
 ## Using External Services for Model Serving
 
-> **Note:** Exercises are suggested as code comments throughout the model serving SBT projects. Search for `// Exercise:` to find them.
-
-One way to serve models in a streaming pipeline is to use an external service to which you delegate scoring. Here we will show how to use _TensorFlow Serving_.
+One way to serve models in a streaming pipeline is to use an external service to which you delegate scoring. Here we will show how to use [TensorFlow Serving](https://www.tensorflow.org/tfx/serving/) invoked from an [Akka Streams](https://doc.akka.io/docs/akka/2.5/stream/) microservice.
 
 Alternatively, other options that we won't investigate here include the following:
 
 * [Seldon-core](https://github.com/SeldonIO/seldon-core)
 * [NVIDIA Tensor RT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html)
+* and others
 
 ### Using TensorFlow Serving
 
-The easiest way to use TensorFlow Serving is to use the TensorFlow Docker image, as described [here](https://medium.com/tensorflow/serving-ml-quickly-with-tensorflow-serving-and-docker-7df7094aa008).
+Running the TensorFlow Docker image is the easiest way to use TensorFlow Serving. The full details are [here](https://medium.com/tensorflow/serving-ml-quickly-with-tensorflow-serving-and-docker-7df7094aa008).
 
-We'll need to pass the location of this tutorial on your machine to the running container, so for convenience, we'll first define an environment variable, `TUTORIAL_HOME` to point to this directory. Edit the following definitions for your actual path.
+We'll need to pass the location of this tutorial on your machine to the running container, so for convenience, we'll first define an environment variable, `TUTORIAL_HOME` to point to this directory. Edit the following definitions for your actual path, where we show an example with the tutorial in your `$HOME` directory.
 
 For bash:
 
@@ -188,23 +189,20 @@ For Windows:
 set TUTORIAL_HOME=%HOME%\model-serving-tutorial
 ```
 
-Edit as appropriate for your machine. Now you can start the image using the following command:
+Now you can start the image using the following command:
 
 ```bash
 docker run -p 8501:8501 --name tfserving_wine --mount type=bind,source=$TUTORIAL_HOME/data/saved,target=/models/wine -e MODEL_NAME=wine -t tensorflow/serving
 ```
 
-On Windows, use `%TUTORIAL_HOME%`.
+Notes:
 
-Here `8501` is the port used by the image to serve REST request which is mapped to local port `8501`.
-
-`--name tfserving_wine` creates the container name that can be used to refer to the running container by name.
-
-`--mount type=bind,source=$TUTORIAL_HOME/data/saved,target=/models/wine` mounts the local location of the model's directory `$TUTORIAL_HOME/data/saved` to the container's directory `/models/wine`.
-
-`-e MODEL_NAME=wine` specifies model's name.
-
-`-t tensorflow/serving` specifies the image to use, `tensorflow/serving:latest` in our case
+* On Windows, use `%TUTORIAL_HOME%`.
+* Port `8501` is used by the image to serve REST requests. We map it to the local port `8501`.
+* `--name tfserving_wine` defines a container name so we can refer to the running container in `docker` commands conveniently.
+* `--mount type=bind,source=$TUTORIAL_HOME/data/saved,target=/models/wine` mounts the local location of the model directory `$TUTORIAL_HOME/data/saved` to the container's directory `/models/wine`.
+* `-e MODEL_NAME=wine` specifies the model name.
+* `-t tensorflow/serving` specifies the image to use, `tensorflow/serving:latest` in our case.
 
 Once the image is up and running, you can visit the available [REST APIs](https://www.tensorflow.org/serving/api_rest), to get information about deployed model, for example:
 
@@ -229,7 +227,7 @@ This returns the following result:
 
 ### Using TensorFlow Serving Programmatically
 
-The `tensorflowserver` project shows how Akka Streams can leverage TensorFlow Serving REST APIs in an Akka Streams implementation.
+The `tensorflowserver` project shows how Akka Streams can leverage TensorFlow Serving REST APIs in an streaming microservice.
 
 There is one application in this project:
 
@@ -273,9 +271,7 @@ sbt:model-serving-tutorial> tensorflowserver/runMain com.lightbend.modelserving.
 
 ## Using Dynamically Controlled Streams for Model Serving
 
-> **Note:** Exercises are suggested as code comments throughout the model serving SBT projects. Search for `// Exercise:` to find them.
-
-_Dynamically Controlled Streams_ is a general pattern where the behavior of the stream processing in changed at runtime through some signaling mechanism. In this case, we change the behavior by updating the model that gets served. The model is effectively the state of the stream. Hence, such an implementation requires stateful stream processing for the main data stream with the state being updatable by a second stream, which we'll call the _state update stream_. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
+_Dynamically Controlled Streams_ is a general pattern where the behavior of the stream processing in changed at runtime. In this case, we change the behavior by updating the model that gets served. The model is effectively the state of the stream. Hence, such an implementation requires stateful stream processing for the main data stream with the state being updated by a second stream, which we'll call the _state update stream_. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
 
 The following image shows the structure:
 
@@ -334,6 +330,8 @@ For completeness, you can also run the app with the fully-qualified name, using 
 sbt:model-serving-tutorial> akkaserver/runMain com.lightbend.modelserving.akka.AkkaModelServer
 ...
 ```
+
+How do the scoring times compare with the TensorFlow Serving times? We shouldn't read too much into the numbers, because we're not running production services on production hardware, but still...
 
 ### Flink Implementation
 
