@@ -29,9 +29,7 @@ import scala.concurrent.Future
 import scala.io.Source
 
 /**
- * Created by boris on 5/10/17.
- *
- * Application publishing models from /data directory to Kafka
+ * Application publishing models from /data directory to Kafka.
  */
 object DataProvider {
 

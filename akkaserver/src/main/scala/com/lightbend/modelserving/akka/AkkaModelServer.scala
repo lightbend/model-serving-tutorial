@@ -76,10 +76,10 @@ object AkkaModelServer {
 
     // Data stream processing
     // Exercise:
-    // You could try invoking the AkkaModelServer logic in bunched, rather than one at a time, although the change in
+    // You could try invoking the AkkaModelServer logic in bunches, rather than one at a time, although the change in
     // overhead should be insignificant. To do this, you would collect windows of events (see this blog post for ideas:
     // https://softwaremill.com/windowing-data-in-akka-streams/), then modify the the other actors in this project to accept
-    // those windows instead of single records.
+    // those windows instead of single records. This may not have much useful impact for this application, however.
     Consumer.atMostOnceSource(dataSettings, Subscriptions.topics(DATA_TOPIC))
       .map(record => DataRecord.fromByteArray(record.value)).collect { case Success(a) => a }
       .via(ActorFlow.ask(1)(modelServerManager)((elem, replyTo : ActorRef[Option[ServingResult[Double]]]) => new ScoreData(replyTo, elem)))

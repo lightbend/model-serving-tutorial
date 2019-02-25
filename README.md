@@ -271,7 +271,7 @@ sbt:model-serving-tutorial> tensorflowserver/runMain com.lightbend.modelserving.
 
 ## Using Dynamically Controlled Streams for Model Serving
 
-_Dynamically Controlled Streams_ is a general pattern where the behavior of the stream processing in changed at runtime through some signaling mechanism. In this case, we change the behavior by updating the model that gets served. The model is effectively the state of the stream. Hence, such an implementation requires stateful stream processing for the main data stream with the state being updated by a second stream, which we'll call the _state update stream_. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
+_Dynamically Controlled Streams_ is a general pattern where the behavior of the stream processing in changed at runtime. In this case, we change the behavior by updating the model that gets served. The model is effectively the state of the stream. Hence, such an implementation requires stateful stream processing for the main data stream with the state being updated by a second stream, which we'll call the _state update stream_. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
 
 The following image shows the structure:
 
