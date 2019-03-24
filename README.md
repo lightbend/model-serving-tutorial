@@ -2,7 +2,10 @@
 
 [![Join the chat at https://gitter.im/lightbend-model-serving-tutorial/community](https://badges.gitter.im/lightbend-model-serving-tutorial.svg)](https://gitter.im/lightbend-model-serving-tutorial/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-> **NOTE:** This code has been tested only with Java 8 and Scala 2.11.12 and Scala 2.12.8 (the default setting). Any other versions of Java will not work. Other versions of Scala 2.11 and 2.12 may work.
+> **NOTES:**
+>
+> 1. This code has been tested only with Java 8 and Scala 2.11.12 and Scala 2.12.8 (the default setting). Any other versions of Java will not work. Other versions of Scala 2.11 and 2.12 may work.
+> 2. Check out our previous tutorial, [kafka-with-akka-streams-kafka-streams-tutorial](https://github.com/lightbend/kafka-with-akka-streams-kafka-streams-tutorial), which provides a more general introduction to writing streaming data systems using Akka Streams and Kafka Streams, also with Kafka as the "data backplane". The sample application is also a model-serving example.
 
 [Boris Lublinsky](mailto:boris.lublinsky@lightbend.com) and [Dean Wampler](mailto:dean.wampler@lightbend.com), [Lightbend](https://lightbend.com/lightbend-platform)
 
