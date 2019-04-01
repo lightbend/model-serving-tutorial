@@ -178,6 +178,8 @@ Alternatively, other options that we won't investigate here include the followin
 
 Running the TensorFlow Docker image is the easiest way to use TensorFlow Serving. The full details are [here](https://medium.com/tensorflow/serving-ml-quickly-with-tensorflow-serving-and-docker-7df7094aa008).
 
+> **NOTE:** If you can't run Docker on your machine, you can try the [installation instructions](https://www.tensorflow.org/install) for running "natively" at the TensorFlow web site. Conference tutorial attendees can also watch us demonstrate the example.
+
 We'll need to pass the location of this tutorial on your machine to the running container, so for convenience, we'll first define an environment variable, `TUTORIAL_HOME` to point to this directory. Edit the following definitions for your actual path, where we show an example with the tutorial in your `$HOME` directory.
 
 For bash:
