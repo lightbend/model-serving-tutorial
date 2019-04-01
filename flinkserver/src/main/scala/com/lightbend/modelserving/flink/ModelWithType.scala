@@ -18,16 +18,14 @@ package com.lightbend.modelserving.flink
 import com.lightbend.modelserving.model.Model
 
 /** Used for Flink checkpointing */
-class ModelWithType[RECORD, RESULT](current : Boolean, dType: String, model: (String,Model[RECORD, RESULT])) {
+class ModelWithType[RECORD, RESULT](dType: String, model: (String,Model[RECORD, RESULT])) {
 
-  val isCurrent = current
   val dataType = dType
   val modelWithName = model
 
   override def equals(obj: Any): Boolean = {
     obj match {
       case modelWithType: ModelWithType[RECORD, RESULT] =>
-          modelWithType.isCurrent == isCurrent &&
           modelWithType.dataType == dataType &&
           modelWithType.modelWithName._1 == modelWithName._1 &&
           modelWithType.modelWithName._2 == modelWithName._2

@@ -36,11 +36,8 @@ class DataProcessorKeyed[RECORD, RESULT]() extends CoProcessFunction[DataToServe
 
   /** The current model state */
   var modelState: ValueState[ModelToServeStats] = _
-  /** The new model state */
-  var newModelState: ValueState[ModelToServeStats] = _
 
   var currentModel : ValueState[Option[Model[RECORD, RESULT]]] = _
-  var newModel : ValueState[Option[Model[RECORD, RESULT]]] = _
 
   /** Called when an instance is created */
   override def open(parameters: Configuration): Unit = {
@@ -55,14 +52,6 @@ class DataProcessorKeyed[RECORD, RESULT]() extends CoProcessFunction[DataToServe
     // Create Model state
     modelState = getRuntimeContext.getState(modelStateDesc)
 
-    // New Model state descriptor
-    val newModelStateDesc = new ValueStateDescriptor[ModelToServeStats](
-      "newModelState",                             // state name
-      createTypeInformation[ModelToServeStats])           // type information
-
-    // Create new model state
-    newModelState = getRuntimeContext.getState(newModelStateDesc)
-
     // Model descriptor
     val modelDesc = new ValueStateDescriptor[Option[Model[RECORD, RESULT]]](
       "currentModel",                               // state name
@@ -70,14 +59,6 @@ class DataProcessorKeyed[RECORD, RESULT]() extends CoProcessFunction[DataToServe
 
     // Create current model state
     currentModel = getRuntimeContext.getState(modelDesc)
-
-    // Create the new model state descriptor
-    val newModelDesc = new ValueStateDescriptor[Option[Model[RECORD, RESULT]]](
-      "newModel",                                    // state name
-      new ModelTypeSerializer[RECORD, RESULT])                               // type information
-
-    // Create the new model state
-    newModel = getRuntimeContext.getState(newModelDesc)
   }
 
 
@@ -88,16 +69,19 @@ class DataProcessorKeyed[RECORD, RESULT]() extends CoProcessFunction[DataToServe
   override def processElement2(model: ModelToServe, ctx: CoProcessFunction[DataToServe[RECORD], ModelToServe, ServingResult[RESULT]]#Context, out: Collector[ServingResult[RESULT]]): Unit = {
 
     // Ensure that the state is initialized
-    if(newModel.value == null) newModel.update(None)
     if(currentModel.value == null) currentModel.update(None)
 
     println(s"New model - $model")
     // Create a model
     ModelToServe.toModel[RECORD, RESULT](model) match {
-      case Some(md) =>
-        newModel.update (Some(md))                            // Create a new model
-        newModelState.update (ModelToServeStats(model))  // Create a new model state
+      case Some(md) => // Update model
+        // Close current model first
+        currentModel.value.foreach(_.cleanup())
+        // Update model
+        currentModel.update(Some(md))
+        modelState.update(ModelToServeStats(model))
       case _ =>   // Model creation failed, continue
+        println(s"Model creation for $model failed")
     }
   }
 
@@ -111,18 +95,7 @@ class DataProcessorKeyed[RECORD, RESULT]() extends CoProcessFunction[DataToServe
     // in a bounded-size cache, so you can toss the oldest ones.
 
     // Ensure that the state is initialized
-    if(newModel.value == null) newModel.update(None)
     if(currentModel.value == null) currentModel.update(None)
-
-    // See if we have update for the model
-    newModel.value.foreach { model =>
-      // Close current model first
-      currentModel.value.foreach(_.cleanup())
-      // Update model
-      currentModel.update(newModel.value)
-      modelState.update(newModelState.value())
-      newModel.update(None)
-    }
 
     // Actually process data
     currentModel.value match {
@@ -133,7 +106,6 @@ class DataProcessorKeyed[RECORD, RESULT]() extends CoProcessFunction[DataToServe
 
         modelState.update(modelState.value().incrementUsage(duration))
         val result = ServingResult[RESULT](modelState.value().name, record.getType, record.getRecord.asInstanceOf[WineRecord].ts, score)
-//        println(result)
         out.collect(result)
       }
       case _ => // Exercise: print/log when a matching model wasn't found. Does the output make sense?

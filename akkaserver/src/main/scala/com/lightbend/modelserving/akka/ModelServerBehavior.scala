@@ -27,28 +27,25 @@ class ModelServerBehavior(context: ActorContext[ModelServerActor], dataType : St
   println(s"Creating a new Model Server for data type $dataType")
 
   private var currentModel: Option[Model[WineRecord, Double]] = None
-  private var newModel: Option[Model[WineRecord, Double]] = None
   var currentState: Option[ModelToServeStats] = None
-  private var newState: Option[ModelToServeStats] = None
 
   override def onMessage(msg: ModelServerActor): Behavior[ModelServerActor] = {
     msg match {
       case model : UpdateModel => // Update Model
         // Update model
         println(s"Updated model: ${model.model}")
-        newState = Some(ModelToServeStats(model.model))
-        newModel = ModelToServe.toModel(model.model)
+        ModelToServe.toModel[WineRecord, Double](model.model) match {
+          case Some(m) => // Successfully got a new model
+            // close current model first
+            currentModel.foreach(_.cleanup())
+            // Update model and state
+            currentModel = Some(m)
+            currentState = Some(ModelToServeStats(model.model))
+          case _ =>   // Failed converting
+            println(s"Failed to convert model: ${model.model}")
+        }
         model.reply ! Done
       case record : ScoreData => // Serve data
-        // See if we have update for the model
-        newModel.foreach { model =>
-          // close current model first
-          currentModel.foreach(_.cleanup())
-          // Update model
-          currentModel = newModel
-          currentState = newState
-          newModel = None
-        }
         // Actually process data
         val result = currentModel match {
           case Some(model) => {

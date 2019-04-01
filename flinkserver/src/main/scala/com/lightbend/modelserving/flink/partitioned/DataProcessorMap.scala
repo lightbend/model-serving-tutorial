@@ -36,8 +36,6 @@ class DataProcessorMap[RECORD, RESULT] extends RichCoFlatMapFunction[DataToServe
 
   // Current models
   private var currentModels = Map[String, (String,Model[RECORD, RESULT])]()
-  // New models
-  private var newModels = Map[String, (String,Model[RECORD, RESULT])]()
 
   // Checkpointing state
   @transient private var checkpointedState: ListState[ModelWithType[RECORD, RESULT]] = _
@@ -47,8 +45,7 @@ class DataProcessorMap[RECORD, RESULT] extends RichCoFlatMapFunction[DataToServe
     // Clear checkpointing state
     checkpointedState.clear()
     // Populate checkpointing state
-    currentModels.foreach(entry => checkpointedState.add(new ModelWithType[RECORD, RESULT](true, entry._1, entry._2)))
-    newModels.foreach(entry => checkpointedState.add(new ModelWithType[RECORD, RESULT](false, entry._1, entry._2)))
+    currentModels.foreach(entry => checkpointedState.add(new ModelWithType[RECORD, RESULT](entry._1, entry._2)))
   }
 
   /** Restore the state from a checkpoint */
@@ -63,18 +60,8 @@ class DataProcessorMap[RECORD, RESULT] extends RichCoFlatMapFunction[DataToServe
     // If restored
     if (context.isRestored) {
       // Create state
-      val nm = new ListBuffer[(String, (String, Model[RECORD, RESULT]))]()
-      val cm = new ListBuffer[(String, (String, Model[RECORD, RESULT]))]()
-      checkpointedState.get().iterator().asScala.foreach(modelWithType => {
-        // For each model in the checkpointed state
-        modelWithType.isCurrent match {
-              case true => cm += (modelWithType.dataType -> modelWithType.modelWithName)  // Its a current model
-              case _ => nm += (modelWithType.dataType -> modelWithType.modelWithName)     // Its a new model
-            }
-       })
-      // Convert lists into maps
-      currentModels = Map(cm: _*)
-      newModels = Map(nm: _*)
+      currentModels = Map(checkpointedState.get().iterator().asScala.toList.map(modelWithType =>
+        (modelWithType.dataType -> modelWithType.modelWithName)): _*)
     }
   }
 
@@ -83,31 +70,24 @@ class DataProcessorMap[RECORD, RESULT] extends RichCoFlatMapFunction[DataToServe
 
     println(s"New model - $model")
     ModelToServe.toModel[RECORD, RESULT](model) match {                     // Inflate model
-      case Some(md) => newModels += (model.dataType -> (model.name, md))  // Save a new model
+      case Some(md) =>
+        // See if we need to update the current model first...
+        // Get the current model, if there is one, and clean it up.
+        // If you're not familiar with Scala, the idiom map.get(key).map(do_something) works like this:
+        //   map.get(key)        // returns either a None (no item) or Some(existing_model).
+        //   .map(do_something)  // does nothing if None was returned. If Some(existing_model) was returned,
+        //                       // applies (do_something) function to the existing_model (cleanup, in our case)
+        currentModels.get(model.dataType).map(m => m._2.cleanup())
+
+        // Now update the current models with the new model for the record type
+        // and remove the new model from new models temporary placeholder.
+        currentModels += (model.dataType -> (model.name, md))
       case _ => println(s"WARNING: ModelToServe.toModel[RECORD, RESULT](model) failed to return a new model from $model")
     }
   }
 
   /** Serve data; i.e., score records with the current model */
   override def flatMap1(record: DataToServe[RECORD], out: Collector[ServingResult[RESULT]]): Unit = {
-    // Exercise:
-    // See the exercise in `DataProcessorKeyed.processElement1`, which discusses keeping a stack of
-    // of models, rather than only one per key or partition in this case. Adapt that idea here.
-
-    // See if we need to update the current model first...
-    if (newModels.contains(record.getType)) {    // There is a new model for this type
-      // Get the current model, if there is one, and clean it up.
-      // If you're not familiar with Scala, the idiom map.get(key).map(do_something) works like this:
-      //   map.get(key)        // returns either a None (no item) or Some(existing_model).
-      //   .map(do_something)  // does nothing if None was returned. If Some(existing_model) was returned,
-      //                       // applies (do_something) function to the existing_model (cleanup, in our case)
-      currentModels.get(record.getType).map(m => m._2.cleanup())
-
-      // Now update the current models with the new model for the record type
-      // and remove the new model from new models temporary placeholder.
-      currentModels += (record.getType -> newModels(record.getType))
-      newModels -= record.getType
-    }
 
     // Actually score the record
     currentModels.get(record.getType) match {

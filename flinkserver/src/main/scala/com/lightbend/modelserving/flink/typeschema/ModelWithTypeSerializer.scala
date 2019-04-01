@@ -26,14 +26,13 @@ import com.lightbend.modelserving.model.ModelToServe
 /** Serializer for a Model with State */
 class ModelWithTypeSerializer[RECORD, RESULT] extends TypeSerializer[ModelWithType[RECORD, RESULT]] {
 
-  override def createInstance(): ModelWithType[RECORD, RESULT] = new ModelWithType[RECORD, RESULT](false, "", null)
+  override def createInstance(): ModelWithType[RECORD, RESULT] = new ModelWithType[RECORD, RESULT]("", null)
 
   override def canEqual(obj: scala.Any): Boolean = obj.isInstanceOf[ModelWithTypeSerializer[RECORD, RESULT]]
 
   override def duplicate(): TypeSerializer[ModelWithType[RECORD, RESULT]] = new ModelWithTypeSerializer[RECORD, RESULT]
 
   override def serialize(model: ModelWithType[RECORD, RESULT], target: DataOutputView): Unit = {
-    target.writeBoolean(model.isCurrent)
     target.writeUTF(model.dataType)
     target.writeUTF(model.modelWithName._1)
     val content = model.modelWithName._2.toBytes()
@@ -49,7 +48,7 @@ class ModelWithTypeSerializer[RECORD, RESULT] extends TypeSerializer[ModelWithTy
   override def snapshotConfiguration(): TypeSerializerSnapshot[ModelWithType[RECORD, RESULT]] = new ModelWithTypeSerializerConfigSnapshot[RECORD, RESULT]
 
   override def copy(from: ModelWithType[RECORD, RESULT]): ModelWithType[RECORD, RESULT] =
-    new ModelWithType[RECORD, RESULT](from.isCurrent, from.dataType, (from.modelWithName._1, ModelToServe.copy(Some(from.modelWithName._2)).get))
+    new ModelWithType[RECORD, RESULT](from.dataType, (from.modelWithName._1, ModelToServe.copy(Some(from.modelWithName._2)).get))
 
   override def copy(from: ModelWithType[RECORD, RESULT], reuse: ModelWithType[RECORD, RESULT]): ModelWithType[RECORD, RESULT] = copy(from)
 
@@ -71,7 +70,6 @@ class ModelWithTypeSerializer[RECORD, RESULT] extends TypeSerializer[ModelWithTy
   }
 
   override def deserialize(source: DataInputView): ModelWithType[RECORD, RESULT] = {
-    val current = source.readBoolean()
     val dataType = source.readUTF()
     val name = source.readUTF()
     val t = source.readLong().asInstanceOf[Int]
@@ -79,8 +77,8 @@ class ModelWithTypeSerializer[RECORD, RESULT] extends TypeSerializer[ModelWithTy
     val content = new Array[Byte](size)
     source.read(content)
     ModelToServe.restore[RECORD, RESULT](t, content) match {
-      case Some(model) => new ModelWithType[RECORD, RESULT](current, dataType, (name, model))
-      case _ => new ModelWithType(current, dataType, null)
+      case Some(model) => new ModelWithType[RECORD, RESULT](dataType, (name, model))
+      case _ => new ModelWithType(dataType, null)
     }
   }
 
