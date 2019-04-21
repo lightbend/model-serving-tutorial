@@ -15,7 +15,7 @@
 
 package com.lightbend.modelserving.client.client
 
-import com.lightbend.modelserving.client.MessageListener
+import com.lightbend.modelserving
 import com.lightbend.modelserving.configuration.ModelServingConfiguration._
 
 object DataReader {
@@ -24,7 +24,7 @@ object DataReader {
 
     println(s"Using kafka brokers at ${KAFKA_BROKER}")
 
-    val listener = MessageListener(KAFKA_BROKER, MODELS_TOPIC, MODELS_GROUP, new RecordProcessor())
+    val listener = modelserving.client.MessageListener(KAFKA_BROKER, MODELS_TOPIC, MODELS_GROUP, new RecordProcessor())
     listener.start()
   }
 }

@@ -103,7 +103,7 @@ object ModelWithTypeSerializerConfigSnapshot{
   * Snapshot configuration for a Model with a type serializer
   * See https://github.com/apache/flink/blob/master/flink-core/src/main/java/org/apache/flink/api/common/typeutils/SimpleTypeSerializerSnapshot.java
   */
-class ModelWithTypeSerializerConfigSnapshot[RECORD, RESULT] extends SimpleTypeSerializerSnapshot[ModelWithType[RECORD, RESULT]]{
+class ModelWithTypeSerializerConfigSnapshot[RECORD, RESULT] extends TypeSerializerSnapshot[ModelWithType[RECORD, RESULT]]{
 
   import ModelWithTypeSerializerConfigSnapshot._
 
