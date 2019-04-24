@@ -44,3 +44,4 @@ loaderinstall.yaml
 ModelServingKeyedJob.id
 checkpoint
 output
+.metals/
