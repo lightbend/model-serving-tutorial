@@ -32,7 +32,7 @@ The Java JDK v8 is required. If not already installed, see the instructions [her
 
 [SBT](https://www.scala-sbt.org/), the _de facto_ build tool for Scala is used to build the Scala code. You don't need to know much about SBT to use it for our purposes. The SBT build files are configured to download all the required dependencies. Go [here](https://www.scala-sbt.org/download.html) for SBT installation instructions.
 
-We used [IntelliJ IDEA](https://www.jetbrains.com/idea/) for managing and building the code, which can drive SBT. The free Community Edition is sufficient. However, using IntelliJ isn't required. Any favorite IDE, such as Microsoft Visual Studio Code, or an editor environment will do, but you may need to run SBT in a separate command window.
+We used [IntelliJ IDEA](https://www.jetbrains.com/idea/) for managing and building the code, which can drive SBT. The free Community Edition is sufficient. However, using IntelliJ isn't required. Any favorite IDE, such as [Microsoft Visual Studio Code](https://code.visualstudio.com/) with [Metals installed](https://marketplace.visualstudio.com/items?itemName=scalameta.metals), or an editor environment will do, but you may need to run SBT in a separate command window if integrated support doesn't exist.
 
 If you use IntelliJ IDEA or another IDE environment, also install the Scala plugin for the IDE. IntelliJ's Scala plugin includes support for SBT (ignore the SBT plugins that are available). Other IDEs might require a separate SBT plugin. Note that the tutorial uses Scala, 2.12.8.
 
