@@ -90,7 +90,7 @@ docker rm tfserving_wine
 
 ## SBT Projects
 
-The SBT build is organized into several projects under the `root` project. There are four projects that illustrate model-serving techniques: `akkaserver`, `flinkserver`, `sparkserver`, `tensorflowserver`. There are four supporting projects: `client`, `configuration`, `model`, `protobufs`. Finally, the `data` directory contains all the data and models used. A data set for wine is used.
+The SBT build is organized into several projects under the `root` project. There are four projects that illustrate model-serving techniques: `akkaserver`, `flinkserver`, `sparkserver`, `tensorflowserver`. There are four supporting projects: `client`, `configuration`, `model`, `protobufs`. Finally, the `data` directory contains all the data and pre-trained models used. A data set for wine is used from [this Kaggle project](https://www.kaggle.com/vishalyo990/prediction-of-quality-of-wine/data). More details are in the tutorial presentation.
 
 > **Note:** Suggested exercises are embedded as code comments throughout the source code in the projects. Search for `// Exercise` to find them.
 
