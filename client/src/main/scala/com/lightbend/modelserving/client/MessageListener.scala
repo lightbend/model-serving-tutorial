@@ -15,6 +15,9 @@
 
 package com.lightbend.modelserving.client
 
+import java.time.Duration
+import java.util.Properties
+
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 
@@ -24,18 +27,18 @@ object MessageListener {
   private val SESSIONTIMEOUT = "30000"    // The timeout used to detect failures - should be greater then processing time
   private val MAXPOLLRECORDS = "10"       // Max number of records consumed in a single poll
 
-  def consumerProperties(brokers: String, group: String, keyDeserealizer: String, valueDeserealizer: String): Map[String, String] = {
-    Map[String, String](
-      ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG -> brokers,
-      ConsumerConfig.GROUP_ID_CONFIG -> group,
-      ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG -> "true",
-      ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG -> AUTOCOMMITINTERVAL,
-      ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG -> SESSIONTIMEOUT,
-      ConsumerConfig.MAX_POLL_RECORDS_CONFIG -> MAXPOLLRECORDS,
-      ConsumerConfig.AUTO_OFFSET_RESET_CONFIG -> "earliest",
-      ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG -> keyDeserealizer,
-      ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG -> valueDeserealizer
-    )
+  def consumerProperties(brokers: String, group: String, keyDeserealizer: String, valueDeserealizer: String): Properties = {
+    val props = new Properties()
+    props.put( ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, group)
+    props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
+    props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, AUTOCOMMITINTERVAL)
+    props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, SESSIONTIMEOUT)
+    props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, MAXPOLLRECORDS)
+    props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserealizer)
+    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserealizer)
+    props
   }
 
   def apply[K, V](brokers: String, topic: String, group: String,
@@ -45,19 +48,19 @@ object MessageListener {
 
 /** Read messages from Kafka. */
 class MessageListener[K, V](
-  brokers: String,
-  topic: String,
-  group: String,
-  keyDeserealizer: String,
-  valueDeserealizer: String,
-  processor: RecordProcessorTrait[K, V]) extends Runnable {
+                             brokers: String,
+                             topic: String,
+                             group: String,
+                             keyDeserealizer: String,
+                             valueDeserealizer: String,
+                             processor: RecordProcessorTrait[K, V]) extends Runnable {
 
   import MessageListener._
 
-  import scala.collection.JavaConversions._
+  import scala.collection.JavaConverters._
 
   val consumer = new KafkaConsumer[K, V](consumerProperties(brokers, group, keyDeserealizer, valueDeserealizer))
-  consumer.subscribe(Seq(topic))
+  consumer.subscribe(Seq(topic).asJava)
   var completed = false
 
   def complete(): Unit = {
@@ -66,7 +69,7 @@ class MessageListener[K, V](
 
   override def run(): Unit = {
     while (!completed) {
-      val records = consumer.poll(100)
+      val records = consumer.poll(Duration.ofMillis(100)).asScala
       for (record <- records) {
         processor.processRecord(record)
       }

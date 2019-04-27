@@ -26,9 +26,7 @@ import com.lightbend.modelserving.flink.typeschema.ByteArraySchema
 import com.lightbend.modelserving.model.ModelToServe
 import com.lightbend.modelserving.winemodel.{DataRecord, WineFactoryResolver}
 import org.apache.flink.configuration.{Configuration, JobManagerOptions, TaskManagerOptions}
-import org.apache.flink.runtime.concurrent.Executors
-import org.apache.flink.runtime.highavailability.HighAvailabilityServicesUtils
-import org.apache.flink.runtime.minicluster.LocalFlinkMiniCluster
+import org.apache.flink.runtime.minicluster.{MiniCluster, MiniClusterConfiguration, RpcServiceSharing}
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
@@ -72,22 +70,17 @@ object ModelServingFlatJob {
     config.setInteger(TaskManagerOptions.NUM_TASK_SLOTS, parallelism)
 
     // Create a local Flink server
-    val flinkCluster = new LocalFlinkMiniCluster(
-      config,
-      HighAvailabilityServicesUtils.createHighAvailabilityServices(
-        config,
-        Executors.directExecutor(),
-        HighAvailabilityServicesUtils.AddressResolution.TRY_ADDRESS_RESOLUTION),
-      false)
+    val flinkCluster = new MiniCluster(
+      new MiniClusterConfiguration(config, 1, RpcServiceSharing.SHARED, null))
     try {
       // Start server and create environment
-      flinkCluster.start(true)
+      flinkCluster.start()
       val env = StreamExecutionEnvironment.createRemoteEnvironment("localhost", port, parallelism)
       // Build Graph
       buildGraph(env)
       val jobGraph = env.getStreamGraph.getJobGraph()
       // Submit to the server and wait for completion
-      flinkCluster.submitJobAndWait(jobGraph, false)
+      flinkCluster.executeJobBlocking(jobGraph)
     } catch {
       case e: Exception => e.printStackTrace()
     }

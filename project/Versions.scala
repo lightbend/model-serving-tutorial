@@ -23,15 +23,15 @@ object Versions {
   val curatorVersion        = "4.0.1"
   val commonIOVersion       = "2.6"
 
-  val flinkVersion          = "1.7.1"
+  val flinkVersion          = "1.8.0"
 
-  val sparkVersion          = "2.4.0"
+  val sparkVersion          = "2.4.2"
   val kryoVersion           = "2.24.0"
 
-  val alpakkaKafkaVersion   = "1.0-RC1"
-  val akkaVersion           = "2.5.19"
-  val akkaHttpVersion       = "10.1.7"
-  val akkaHttpJsonVersion   = "1.22.0"
+  val alpakkaKafkaVersion   = "1.0.1"
+  val akkaVersion           = "2.5.22"
+  val akkaHttpVersion       = "10.1.8"
+  val akkaHttpJsonVersion   = "1.25.2"
 
   val gsonVersion           = "2.8.5"
 

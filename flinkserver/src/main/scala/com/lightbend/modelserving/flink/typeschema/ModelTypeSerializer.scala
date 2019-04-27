@@ -28,8 +28,6 @@ class ModelTypeSerializer[RECORD, RESULT] extends TypeSerializer[Option[Model[RE
 
   override def createInstance(): Option[Model[RECORD, RESULT]] = None
 
-  override def canEqual(obj: scala.Any): Boolean = obj.isInstanceOf[ModelTypeSerializer[RECORD, RESULT]]
-
   override def duplicate(): TypeSerializer[Option[Model[RECORD, RESULT]]] = new ModelTypeSerializer[RECORD, RESULT]
 
   override def serialize(record: Option[Model[RECORD, RESULT]], target: DataOutputView): Unit = {

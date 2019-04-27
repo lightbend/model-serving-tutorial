@@ -29,7 +29,7 @@ import org.apache.flink.api.common.JobID
 import org.apache.flink.configuration.{Configuration, JobManagerOptions, QueryableStateOptions, TaskManagerOptions}
 import org.apache.flink.runtime.concurrent.Executors
 import org.apache.flink.runtime.highavailability.HighAvailabilityServicesUtils
-import org.apache.flink.runtime.minicluster.LocalFlinkMiniCluster
+import org.apache.flink.runtime.minicluster.{MiniCluster, MiniClusterConfiguration, RpcServiceSharing}
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
@@ -86,6 +86,7 @@ object ModelServingKeyedJob {
     config.setInteger(TaskManagerOptions.NUM_TASK_SLOTS, parallelism)
 
     // In a non MiniCluster setup queryable state is enabled by default.
+    config.setBoolean(QueryableStateOptions.ENABLE_QUERYABLE_STATE_PROXY_SERVER, true)
     config.setString(QueryableStateOptions.PROXY_PORT_RANGE, "9069")
     config.setInteger(QueryableStateOptions.PROXY_NETWORK_THREADS, 2)
     config.setInteger(QueryableStateOptions.PROXY_ASYNC_QUERY_THREADS, 2)
@@ -96,23 +97,18 @@ object ModelServingKeyedJob {
 
 
     // Create a local Flink server
-    val flinkCluster = new LocalFlinkMiniCluster(
-      config,
-      HighAvailabilityServicesUtils.createHighAvailabilityServices(
-        config,
-        Executors.directExecutor(),
-        HighAvailabilityServicesUtils.AddressResolution.TRY_ADDRESS_RESOLUTION),
-      false)
+    val flinkCluster = new MiniCluster(
+      new MiniClusterConfiguration(config, 1, RpcServiceSharing.SHARED, null))
     try {
       // Start server and create environment
-      flinkCluster.start(true)
-      val env = StreamExecutionEnvironment.createRemoteEnvironment("localhost", flinkCluster.getLeaderRPCPort)
-       // Build Graph
+      flinkCluster.start()
+      val env = StreamExecutionEnvironment.createRemoteEnvironment("localhost", port)
+      // Build Graph
       buildGraph(env)
       val jobGraph = env.getStreamGraph.getJobGraph()
       // Submit to the server and wait for completion
-      val result = flinkCluster.submitJobDetached(jobGraph)
-      writeJobId(idFileName, result.getJobID)
+      val submit = flinkCluster.submitJob(jobGraph).get()
+      System.out.println(s"Job ID: ${submit.getJobID}")
       Thread.sleep(Long.MaxValue)
     } catch {
       case e: Exception => e.printStackTrace()

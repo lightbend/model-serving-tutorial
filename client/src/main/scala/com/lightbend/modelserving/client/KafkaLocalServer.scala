@@ -78,6 +78,7 @@ class KafkaLocalServer private (kafkaProperties: Properties, zooKeeperServer: Zo
     * @param replication The replication factor for (partitions of) this topic.
     * @param topicConfig Additional topic-level configuration settings.
     */
+  @silent
   def createTopic(topic: String, partitions: Int, replication: Int, topicConfig: Properties): Unit = {
     AdminUtils.createTopic(zkUtils, topic, partitions, replication, topicConfig, RackAwareMode.Enforced)
   }
