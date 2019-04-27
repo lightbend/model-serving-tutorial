@@ -45,3 +45,4 @@ ModelServingKeyedJob.id
 checkpoint
 output
 .metals/
+.bloop/

@@ -32,7 +32,7 @@ The Java JDK v8 is required. If not already installed, see the instructions [her
 
 [SBT](https://www.scala-sbt.org/), the _de facto_ build tool for Scala is used to build the Scala code. You don't need to know much about SBT to use it for our purposes. The SBT build files are configured to download all the required dependencies. Go [here](https://www.scala-sbt.org/download.html) for SBT installation instructions.
 
-We used [IntelliJ IDEA](https://www.jetbrains.com/idea/) for managing and building the code, which can drive SBT. The free Community Edition is sufficient. However, using IntelliJ isn't required. Any favorite IDE, such as Microsoft Visual Studio Code, or an editor environment will do, but you may need to run SBT in a separate command window.
+We used [IntelliJ IDEA](https://www.jetbrains.com/idea/) for managing and building the code, which can drive SBT. The free Community Edition is sufficient. However, using IntelliJ isn't required. Any favorite IDE, such as [Microsoft Visual Studio Code](https://code.visualstudio.com/) with [Metals installed](https://marketplace.visualstudio.com/items?itemName=scalameta.metals), or an editor environment will do, but you may need to run SBT in a separate command window if integrated support doesn't exist.
 
 If you use IntelliJ IDEA or another IDE environment, also install the Scala plugin for the IDE. IntelliJ's Scala plugin includes support for SBT (ignore the SBT plugins that are available). Other IDEs might require a separate SBT plugin. Note that the tutorial uses Scala, 2.12.8.
 
@@ -90,7 +90,7 @@ docker rm tfserving_wine
 
 ## SBT Projects
 
-The SBT build is organized into several projects under the `root` project. There are four projects that illustrate model-serving techniques: `akkaserver`, `flinkserver`, `sparkserver`, `tensorflowserver`. There are four supporting projects: `client`, `configuration`, `model`, `protobufs`. Finally, the `data` directory contains all the data and models used. A data set for wine is used.
+The SBT build is organized into several projects under the `root` project. There are four projects that illustrate model-serving techniques: `akkaserver`, `flinkserver`, `sparkserver`, `tensorflowserver`. There are four supporting projects: `client`, `configuration`, `model`, `protobufs`. Finally, the `data` directory contains all the data and pre-trained models used. A data set for wine is used from [this Kaggle project](https://www.kaggle.com/vishalyo990/prediction-of-quality-of-wine/data). More details are in the tutorial presentation.
 
 > **Note:** Suggested exercises are embedded as code comments throughout the source code in the projects. Search for `// Exercise` to find them.
 
