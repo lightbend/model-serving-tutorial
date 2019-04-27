@@ -15,7 +15,7 @@
 
 name := "model-serving-tutorial"
 
-version := "0.1.0"
+version := "1.1.1"
 
 scalaVersion in ThisBuild := "2.12.8" // "2.11.12"
 scalacOptions in ThisBuild ++= Seq(
