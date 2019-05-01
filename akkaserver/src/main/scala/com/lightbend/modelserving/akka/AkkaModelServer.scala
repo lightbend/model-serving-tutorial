@@ -25,8 +25,9 @@ import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.stream.typed.scaladsl.{ActorFlow, ActorMaterializer}
 import akka.stream.scaladsl.Sink
 import akka.util.Timeout
+import com.lightbend.model.winerecord.WineRecord
 import com.lightbend.modelserving.configuration.ModelServingConfiguration
-import com.lightbend.modelserving.model.{ModelToServe, ServingResult}
+import com.lightbend.modelserving.model.{DataToServe, ModelToServe, ServingResult}
 import com.lightbend.modelserving.winemodel.{DataRecord, WineFactoryResolver}
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
@@ -71,7 +72,8 @@ object AkkaModelServer {
     // Model stream processing
     Consumer.atMostOnceSource(modelSettings, Subscriptions.topics(MODELS_TOPIC))
       .map(record => ModelToServe.fromByteArray(record.value)).collect { case Success(a) => a }
-      .via(ActorFlow.ask(1)(modelServerManager)((elem, replyTo : ActorRef[Done]) => new UpdateModel(replyTo, elem)))
+      .via(ActorFlow.ask(1)(modelServerManager)(
+        (elem : ModelToServe, replyTo : ActorRef[Done]) => new UpdateModel(replyTo, elem)))
       .runWith(Sink.ignore) // run the stream, we do not read the results directly
 
     // Data stream processing
@@ -82,7 +84,8 @@ object AkkaModelServer {
     // those windows instead of single records. This may not have much useful impact for this application, however.
     Consumer.atMostOnceSource(dataSettings, Subscriptions.topics(DATA_TOPIC))
       .map(record => DataRecord.fromByteArray(record.value)).collect { case Success(a) => a }
-      .via(ActorFlow.ask(1)(modelServerManager)((elem, replyTo : ActorRef[Option[ServingResult[Double]]]) => new ScoreData(replyTo, elem)))
+      .via(ActorFlow.ask(1)(modelServerManager)(
+        (elem: DataToServe[WineRecord], replyTo : ActorRef[Option[ServingResult[Double]]]) => new ScoreData(replyTo, elem)))
       .collect{ case (Some(result)) => result}
       .runWith(Sink.foreach(result =>
         println(s"Model serving in ${System.currentTimeMillis() - result.duration} ms, with result ${result.result} " +

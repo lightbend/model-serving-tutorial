@@ -31,36 +31,36 @@ class ModelServerBehavior(context: ActorContext[ModelServerActor], dataType : St
 
   override def onMessage(msg: ModelServerActor): Behavior[ModelServerActor] = {
     msg match {
-      case model : UpdateModel => // Update Model
+      case update : UpdateModel => // Update Model
         // Update model
-        println(s"Updated model: ${model.model}")
-        ModelToServe.toModel[WineRecord, Double](model.model) match {
+        println(s"Updated model: ${update.model}")
+        ModelToServe.toModel[WineRecord, Double](update.model) match {
           case Some(m) => // Successfully got a new model
             // close current model first
             currentModel.foreach(_.cleanup())
             // Update model and state
             currentModel = Some(m)
-            currentState = Some(ModelToServeStats(model.model))
+            currentState = Some(ModelToServeStats(update.model))
           case _ =>   // Failed converting
-            println(s"Failed to convert model: ${model.model}")
+            println(s"Failed to convert model: ${update.model}")
         }
-        model.reply ! Done
-      case record : ScoreData => // Serve data
+        update.reply ! Done
+      case scoreData : ScoreData => // Serve data
         // Actually process data
         val result = currentModel match {
           case Some(model) => {
             val start = System.currentTimeMillis()
             // Actually serve
-            val result = model.score(record.record.getRecord)
+            val result = model.score(scoreData.record.getRecord)
             val duration = System.currentTimeMillis() - start
             // Update state
             currentState = Some(currentState.get.incrementUsage(duration))
             // result
-            Some(ServingResult(currentState.get.name, record.record.getType, record.record.getRecord.asInstanceOf[WineRecord].ts, result.asInstanceOf[Double]))
+            Some(ServingResult(currentState.get.name, scoreData.record.getType, scoreData.record.getRecord.asInstanceOf[WineRecord].ts, result.asInstanceOf[Double]))
           }
           case _ => None
         }
-        record.reply ! result
+        scoreData.reply ! result
       case getState : GetState => // State query
         getState.reply ! currentState.getOrElse(ModelToServeStats())
     }
