@@ -27,8 +27,6 @@ import com.lightbend.modelserving.model.ModelToServe
 import com.lightbend.modelserving.winemodel.{DataRecord, WineFactoryResolver}
 import org.apache.flink.api.common.JobID
 import org.apache.flink.configuration.{Configuration, JobManagerOptions, QueryableStateOptions, TaskManagerOptions}
-import org.apache.flink.runtime.concurrent.Executors
-import org.apache.flink.runtime.highavailability.HighAvailabilityServicesUtils
 import org.apache.flink.runtime.minicluster.{MiniCluster, MiniClusterConfiguration, RpcServiceSharing}
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
