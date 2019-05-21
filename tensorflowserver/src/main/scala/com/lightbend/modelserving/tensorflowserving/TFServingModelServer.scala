@@ -64,7 +64,7 @@ object TFServingModelServer {
     Consumer.atMostOnceSource(dataSettings, Subscriptions.topics(DATA_TOPIC))
       .map(record => DataRecord.wineFromByteArray(record.value)).collect { case Success(a) => a }
       .via(ActorFlow.ask(1)(modelServer)((elem, replyTo : ActorRef[Option[ServingResult[Double]]]) => new ServeData(replyTo, elem)))
-      .collect{ case (Some(result)) => result}
+      .collect{ case Some(result) => result}
       .runWith(Sink.foreach(result =>
         println(s"Model serving in ${System.currentTimeMillis() - result.duration} ms, with result ${result.result} " +
           s"(model ${result.name}, data type ${result.dataType})")))
