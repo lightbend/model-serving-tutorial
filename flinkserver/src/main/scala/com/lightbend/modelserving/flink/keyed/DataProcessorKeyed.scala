@@ -29,7 +29,7 @@ import org.apache.flink.util.Collector
   *
   * see http://dataartisans.github.io/flink-training/exercises/eventTimeJoin.html for details
   * In Flink, a class instance is created not for each key, but rather for each key group,
-  * https://ci.apache.org/projects/flink/flink-docs-release-1.6/dev/stream/state/state.html#keyed-state-and-operator-state.
+  * https://ci.apache.org/projects/flink/flink-docs-release-1.9/dev/stream/state/state.html#keyed-state-and-operator-state.
   * As a result, any state data has to be in the key specific state.
   */
 class DataProcessorKeyed[RECORD, RESULT]() extends CoProcessFunction[DataToServe[RECORD], ModelToServe, ServingResult[RESULT]]{
@@ -99,7 +99,7 @@ class DataProcessorKeyed[RECORD, RESULT]() extends CoProcessFunction[DataToServe
 
     // Actually process data
     currentModel.value match {
-      case Some(model) => {
+      case Some(model) =>
         val start = System.currentTimeMillis()
         val score = model.score(record.getRecord)
         val duration = System.currentTimeMillis() - start
@@ -107,7 +107,6 @@ class DataProcessorKeyed[RECORD, RESULT]() extends CoProcessFunction[DataToServe
         modelState.update(modelState.value().incrementUsage(duration))
         val result = ServingResult[RESULT](modelState.value().name, record.getType, record.getRecord.asInstanceOf[WineRecord].ts, score)
         out.collect(result)
-      }
       case _ => // Exercise: print/log when a matching model wasn't found. Does the output make sense?
     }
   }

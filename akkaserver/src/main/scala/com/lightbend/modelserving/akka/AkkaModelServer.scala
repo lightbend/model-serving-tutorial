@@ -88,7 +88,7 @@ object AkkaModelServer {
         (elem: DataToServe[WineRecord], replyTo : ActorRef[Option[ServingResult[Double]]]) => new ScoreData(replyTo, elem)))
       .collect{ case (Some(result)) => result}
       .runWith(Sink.foreach(result =>
-        println(s"Model serving in ${System.currentTimeMillis() - result.duration} ms, with result ${result.result} " +
+        println(s"Model served in ${System.currentTimeMillis() - result.submissionTs} ms, with result ${result.result} " +
           s"(model ${result.name}, data type ${result.dataType})")))
     // Rest Server
     startRest(modelServerManager)

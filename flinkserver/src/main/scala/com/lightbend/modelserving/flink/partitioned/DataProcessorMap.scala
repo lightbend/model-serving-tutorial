@@ -16,10 +16,9 @@
 package com.lightbend.modelserving.flink.partitioned
 
 import com.lightbend.model.winerecord.WineRecord
-import com.lightbend.modelserving.model.{DataToServe, Model}
 import com.lightbend.modelserving.flink.ModelWithType
 import com.lightbend.modelserving.flink.typeschema.ModelWithTypeSerializer
-import com.lightbend.modelserving.model.{ModelToServe, ServingResult}
+import com.lightbend.modelserving.model.{DataToServe, Model, ModelToServe, ServingResult}
 import org.apache.flink.api.common.state.{ListState, ListStateDescriptor}
 import org.apache.flink.runtime.state.{FunctionInitializationContext, FunctionSnapshotContext}
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction
@@ -27,7 +26,7 @@ import org.apache.flink.streaming.api.functions.co.RichCoFlatMapFunction
 import org.apache.flink.util.Collector
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{ListBuffer, Map}
+import scala.collection.mutable.Map
 
 /**
   * Main class processing data using models where state is partitioned, rather than keyed.
@@ -77,7 +76,7 @@ class DataProcessorMap[RECORD, RESULT] extends RichCoFlatMapFunction[DataToServe
         //   map.get(key)        // returns either a None (no item) or Some(existing_model).
         //   .map(do_something)  // does nothing if None was returned. If Some(existing_model) was returned,
         //                       // applies (do_something) function to the existing_model (cleanup, in our case)
-        currentModels.get(model.dataType).map(m => m._2.cleanup())
+        currentModels.get(model.dataType).foreach(m => m._2.cleanup())
 
         // Now update the current models with the new model for the record type
         // and remove the new model from new models temporary placeholder.

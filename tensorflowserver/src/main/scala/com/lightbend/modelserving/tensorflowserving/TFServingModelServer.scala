@@ -25,8 +25,8 @@ import akka.stream.scaladsl.Sink
 import akka.stream.typed.scaladsl.{ActorFlow, ActorMaterializer}
 import akka.util.Timeout
 import com.lightbend.modelserving.configuration.ModelServingConfiguration
-import com.lightbend.modelserving.model.{ModelToServe, ServingResult}
-import com.lightbend.modelserving.winemodel.{DataRecord, WineFactoryResolver}
+import com.lightbend.modelserving.model.ServingResult
+import com.lightbend.modelserving.winemodel.DataRecord
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 
@@ -66,7 +66,7 @@ object TFServingModelServer {
       .via(ActorFlow.ask(1)(modelServer)((elem, replyTo : ActorRef[Option[ServingResult[Double]]]) => new ServeData(replyTo, elem)))
       .collect{ case Some(result) => result}
       .runWith(Sink.foreach(result =>
-        println(s"Model serving in ${System.currentTimeMillis() - result.duration} ms, with result ${result.result} " +
+        println(s"Model served in ${System.currentTimeMillis() - result.submissionTs} ms, with result ${result.result} " +
           s"(model ${result.name}, data type ${result.dataType})")))
     // Rest Server
     startRest(modelServer)

@@ -21,5 +21,5 @@ package com.lightbend.modelserving.model
 case class ServingResult[RESULT](
   name : String,
   dataType : String = "",
-  duration : Long = 0,
+  submissionTs : Long = 0,
   result: RESULT = null.asInstanceOf[RESULT])
