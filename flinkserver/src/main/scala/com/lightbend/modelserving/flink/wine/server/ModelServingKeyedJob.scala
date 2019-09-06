@@ -169,7 +169,7 @@ object ModelServingKeyedJob {
       .connect(models)
       .process(DataProcessorKeyed[WineRecord, Double]())
       .map{ result =>
-        println(s"Model serving in ${System.currentTimeMillis() - result.duration} ms, with result ${result.result} (model ${result.name}, data type ${result.dataType})")
+        println(s"Model served in ${System.currentTimeMillis() - result.submissionTs} ms, with result ${result.result} (model ${result.name}, data type ${result.dataType})")
         result
       }
       .writeAsText(outputFileName) // Also write the records to a file.

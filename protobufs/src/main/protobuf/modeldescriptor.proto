@@ -13,11 +13,9 @@
  * limitations under the License.
  */
 
-
 syntax = "proto3";
 
 option java_package = "com.lightbend.model";
-
 
 // Description of the trained model.
 message ModelDescriptor {

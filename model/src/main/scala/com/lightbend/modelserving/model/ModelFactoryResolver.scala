@@ -15,8 +15,6 @@
 
 package com.lightbend.modelserving.model
 
-import com.lightbend.model.modeldescriptor.ModelDescriptor
-
 /**
   * Base interface for ModelFactories resolver. The implementation of this trait should return the model factory
   * base on a model type. Currently the following types are defined:

@@ -138,6 +138,6 @@ object ModelServingFlatJob {
     data
       .connect(models)
       .flatMap(DataProcessorMap[WineRecord, Double]())
-      .map(result => println(s"Model serving in ${System.currentTimeMillis() - result.duration} ms, with result ${result.result} (model ${result.name}, data type ${result.dataType})"))
+      .map(result => println(s"Model served in ${System.currentTimeMillis() - result.submissionTs} ms, with result ${result.result} (model ${result.name}, data type ${result.dataType})"))
   }
 }

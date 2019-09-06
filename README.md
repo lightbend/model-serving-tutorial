@@ -4,7 +4,7 @@
 
 > **NOTES:**
 >
-> 1. This code has been tested only with Java 8 and Scala 2.11.12 and Scala 2.12.8 (the default setting). Any other versions of Java will not work. Other versions of Scala 2.11 and 2.12 may work.
+> 1. This code has been tested only with Java 8 and Scala 2.11.12 and Scala 2.12.9 (the default setting). Any other versions of Java will not work. Other versions of Scala 2.11 and 2.12 may work.
 > 2. Check out our previous tutorial, [kafka-with-akka-streams-kafka-streams-tutorial](https://github.com/lightbend/kafka-with-akka-streams-kafka-streams-tutorial), which provides a more general introduction to writing streaming data systems using Akka Streams and Kafka Streams, also with Kafka as the "data backplane". The sample application is also a model-serving example.
 
 [Boris Lublinsky](mailto:boris.lublinsky@lightbend.com) and [Dean Wampler](mailto:dean.wampler@lightbend.com), [Lightbend](https://lightbend.com/lightbend-platform)
@@ -258,8 +258,8 @@ Akka model server, brokers localhost:9092
   auto.commit.interval.ms = 5000
   auto.offset.reset = earliest
 ...
-Model serving in 30 ms, with result 6.0 (model TensorFlow Model Serving, data type wine)
-Model serving in 49 ms, with result 6.0 (model TensorFlow Model Serving, data type wine)
+Model served in 30 ms, with result 6.0 (model TensorFlow Model Serving, data type wine)
+Model served in 49 ms, with result 6.0 (model TensorFlow Model Serving, data type wine)
 ...
 ```
 
@@ -276,7 +276,7 @@ sbt:model-serving-tutorial> tensorflowserver/runMain com.lightbend.modelserving.
 
 ## Using Dynamically Controlled Streams for Model Serving
 
-_Dynamically Controlled Streams_ is a general pattern where the behavior of the stream processing in changed at runtime. In this case, we change the behavior by updating the model that gets served. The model is effectively the state of the stream. Hence, such an implementation requires stateful stream processing for the main data stream with the state being updated by a second stream, which we'll call the _state update stream_. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
+_Dynamically Controlled Streams_ is a general pattern where the behavior of the stream processing is changed at runtime. In this case, we change the behavior by updating the model that gets served. The model is effectively the state of the stream. Hence, such an implementation requires stateful stream processing for the main data stream with the state being updated by a second stream, which we'll call the _state update stream_. Both streams are read from the centralized data log containing all of the incoming data and updates from all of the services.
 
 The following image shows the structure:
 
@@ -300,7 +300,7 @@ Akka Actors are used to implement the execution state. Specifically, the new [Ak
 Additionally we implement the [Queryable State Pattern](https://kafka.apache.org/10/documentation/streams/developer-guide/interactive-queries.html), which provides convenient REST access to the internal state of the stream without the need to write that state to a persistent store and query it from there. Specifically, our implementation, [QueriesAkkaHTTPResource](akkaserver/src/main/scala/com/lightbend/modelserving/akka/QueriesAkkaHttpResource.scala), provides access to the model serving statistics stored in the Actors.
 
 Finally the Akka Streams implementation itself, [AkkaModelServer](akkaserver/src/main/scala/com/lightbend/modelserving/akka/AkkaModelServer.scala) brings all the pieces together and provides the app you run. Running it will
-produce a [ServingResult](model/src/main/scala/com/lightbend/modelserving/model/ ServingResult.scala) that contains the result, the duration (execution time) and other information. The duration is a time from message submission to the point when a result can be used. So it includes message submission and Kafka time in addition to the actual model serving latency.
+produce a [ServingResult](model/src/main/scala/com/lightbend/modelserving/model/ServingResult.scala) that contains the result, the duration (execution time) and other information. The duration is a time from message submission to the point when a result can be used. So it includes message submission and Kafka time in addition to the actual model serving latency.
 
 > **Note:** Because the duration is computed with the message submission time, when one of the model server apps is started and it begins processing messages that have been in the Kafka data topic for a while, the duration times computed will be very large. As the app catches up with the latest messages, these times will converge to a lower limit.
 
@@ -321,9 +321,9 @@ sbt:model-serving-tutorial> akkaserver/run
 
 ...
 Updated model: ModelToServe(winequalityDesisionTreeRegression,generated from SparkML,2,[B@11e6ac4d,null,wine)
-Model serving in 30 ms, with result 6.0 (model tensorflow saved model, data type wine)
+Model served in 30 ms, with result 6.0 (model tensorflow saved model, data type wine)
 Updated model: ModelToServe(winequalityMultilayerPerceptron,generated from SparkML,2,[B@79be7f2a,null,wine)
-Model serving in 49 ms, with result 6.0 (model TensorFlow saved model, data type wine)
+Model served in 49 ms, with result 6.0 (model TensorFlow saved model, data type wine)
 ...
 ```
 
@@ -344,7 +344,7 @@ This implementation shows how to use Apache Flink's [low level joins](https://ci
 
 There are two implementations:
 
-* [ModelServingKeyedJob.scala](flinkserver/src/main/scala/com/lightbend/modelserving/flink/wine/server/ModelServingKeyedJob.scala) uses a key-based implementation, [DataProcessorKeyed.scala](flinkserver/src/main/scala/com/lightbend/modelserving/flink/keyed/DataProcessorKeyed.scala) based on Flink's [Processor Function](https://ci.apache.org/projects/flink/flink-docs-release-1.7/dev/stream/operators/process_function.html#low-level-joins).
+* [ModelServingKeyedJob.scala](flinkserver/src/main/scala/com/lightbend/modelserving/flink/wine/server/ModelServingKeyedJob.scala) uses a key-based implementation, [DataProcessorKeyed.scala](flinkserver/src/main/scala/com/lightbend/modelserving/flink/keyed/DataProcessorKeyed.scala) based on Flink's [Processor Function](https://ci.apache.org/projects/flink/flink-docs-release-1.9/dev/stream/operators/process_function.html#low-level-joins).
 * [ModelServingFlatJob](flinkserver/src/main/scala/com/lightbend/modelserving/flink/wine/server/ModelServingFlatJob.scala) uses a partition-based implementation, [DataProcessorMap.scala](flinkserver/src/main/scala/com/lightbend/modelserving/flink/partitioned/DataProcessorMap.scala) based on Flink's [RichCoFlatMapFunction](https://www.da-platform.com/blog/bettercloud-dynamic-alerting-apache-flink).
 
 The choice of implementation depends on the load and the distribution of the data types. See this [Flink documentation on model serving](https://cwiki.apache.org/confluence/display/FLINK/FLIP-23+-+Model+Serving) for more details.
@@ -466,21 +466,21 @@ Our previous tutorial, [github.com/lightbend/kafka-with-akka-streams-kafka-strea
 
 ### Spark
 
-For the version of Spark we use, 2.4.0, the latest at this time. Replace `2.4.0` in the URLs with `latest` for the "latest" version of Spark, whatever it is.
+For the version of Spark we use, 2.4.4, the latest at this time. Replace `2.4.4` in the URLs with `latest` for the "latest" version of Spark, whatever it is.
 
 * [Spark Home](https://spark.apache.org/) (for all versions)
-* [Spark Docs Overview](https://spark.apache.org/docs/2.4.0/index.html)
-* [Spark Structured Streaming Programming Guide](https://spark.apache.org/docs/2.4.0/structured-streaming-programming-guide.html)
-* [Spark Scaladocs](https://spark.apache.org/docs/2.4.0/api/scala/index.html#org.apache.spark.package)
+* [Spark Docs Overview](https://spark.apache.org/docs/2.4.4/index.html)
+* [Spark Structured Streaming Programming Guide](https://spark.apache.org/docs/2.4.4/structured-streaming-programming-guide.html)
+* [Spark Scaladocs](https://spark.apache.org/docs/2.4.4/api/scala/index.html#org.apache.spark.package)
 
 ### Flink
 
-We're using version 1.7.X.
+We're using version 1.9.X.
 
 * [Flink Home](https://flink.apache.org/)
-* [Flink Docs Overview](https://ci.apache.org/projects/flink/flink-docs-release-1.7/)
-* [Flink Scaladocs](https://ci.apache.org/projects/flink/flink-docs-release-1.7/api/scala/index.html#org.apache.flink.api.scala.package) - does not cover the whole Flink API, so also see...
-* [Flink Javadocs](https://ci.apache.org/projects/flink/flink-docs-release-1.7/api/java/)
+* [Flink Docs Overview](https://ci.apache.org/projects/flink/flink-docs-release-1.9/)
+* [Flink Scaladocs](https://ci.apache.org/projects/flink/flink-docs-release-1.9/api/scala/index.html#org.apache.flink.api.scala.package) - does not cover the whole Flink API, so also see...
+* [Flink Javadocs](https://ci.apache.org/projects/flink/flink-docs-release-1.9/api/java/)
 
 
 ### Akka and Akka Streams

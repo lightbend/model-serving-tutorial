@@ -102,7 +102,7 @@ object DataProvider {
         // PMML
         val pByteArray = Files.readAllBytes(Paths.get(directory + f))
         val pRecord = ModelDescriptor(
-          name = f.dropRight(5),
+          name = f.dropRight(".pmml".length),
           description = "generated from SparkML", modeltype = ModelDescriptor.ModelType.PMML,
           dataType = "wine"
         ).withData(ByteString.copyFrom(pByteArray))
@@ -115,7 +115,7 @@ object DataProvider {
 
       // TF
       val tByteArray = Files.readAllBytes(Paths.get(tensorfile))
-      val tRecord = ModelDescriptor(name = tensorfile.dropRight(3),
+      val tRecord = ModelDescriptor(name = tensorfile.dropRight(".pb".length),
         description = "generated from TensorFlow", modeltype = ModelDescriptor.ModelType.TENSORFLOW,
         dataType = "wine").withData(ByteString.copyFrom(tByteArray))
       bos.reset()

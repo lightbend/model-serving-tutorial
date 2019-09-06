@@ -49,7 +49,7 @@ abstract class TensorFlowBundleModel[RECORD,RESULT](inputStream : Array[Byte]) e
     // get tags. We assume here that the first tag is the one we use
     tags = getTags(path)
     // get saved model bundle
-    val bundle = SavedModelBundle.load(path, tags(0))
+    val bundle = SavedModelBundle.load(path, tags.head)
     // get grapth
     graph = bundle.graph
     // get metatagraph and signature
