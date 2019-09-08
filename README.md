@@ -11,6 +11,7 @@
 
 * [Strata Data Conference San Jose, Tuesday, March 6, 2019](https://conferences.oreilly.com/strata/strata-ca/public/schedule/detail/63983)
 * [Strata Data Conference London, Tuesday, May 22, 2019](https://conferences.oreilly.com/strata/strata-eu/public/schedule/detail/65420)
+* [O'Reilly Artificial Intelligence Conference, Tuesday, Sep 10, 2019](https://conferences.oreilly.com/artificial-intelligence/ai-ca/schedule/2019-09-10)
 
 ©Copyright 2017-2019, Lightbend, Inc. Apache 2.0 License. Please use as you see fit, at your own risk, but attribution is requested.
 
@@ -200,19 +201,8 @@ Now you can start the image using the following command:
 docker run -p 8501:8501 --name tfserving_wine --mount type=bind,source=$TUTORIAL_HOME/data/saved,target=/models/wine -e MODEL_NAME=wine -t tensorflow/serving
 ```
 
-Notes:
-
-* On Windows, use `%TUTORIAL_HOME%`.
-* Port `8501` is used by the image to serve REST requests. We map it to the local port `8501`.
-* `--name tfserving_wine` defines a container name so we can refer to the running container in `docker` commands conveniently.
-* `--mount type=bind,source=$TUTORIAL_HOME/data/saved,target=/models/wine` mounts the local location of the model directory `$TUTORIAL_HOME/data/saved` to the container's directory `/models/wine`.
-* `-e MODEL_NAME=wine` specifies the model name.
-* `-t tensorflow/serving` specifies the image to use, `tensorflow/serving:latest` in our case.
-
-Once the image is up and running, you can visit the available [REST APIs](https://www.tensorflow.org/serving/api_rest), to get information about deployed model, for example:
-
-* http://localhost:8501/v1/models/wine/versions/1 to get the status of the deployed model
-* http://localhost:8501/v1/models/wine/versions/1/metadata to get metadata about deployed model.
+* http://localhost:8501/v1/models/recommender/versions/1 to get the status of the deployed model
+* http://localhost:8501/v1/models/recommender/versions/1/metadata to get metadata about deployed model.
 
 Rest APIs are also used to serve the model:
 

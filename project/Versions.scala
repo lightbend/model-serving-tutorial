@@ -15,7 +15,7 @@
 
 object Versions {
 
-  val tensorflowVersion     = "1.14.0"
+  val tensorflowVersion     = "1.13.1"
   val PMMLVersion           = "1.4.3"
 
   val kafkaVersion          = "2.3.0"
