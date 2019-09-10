@@ -128,7 +128,7 @@ object SparkStructuredModelServer {
       .groupByKey(_.dataType)
       .mapGroupsWithState(GroupStateTimeout.NoTimeout())(modelServing).as[Seq[ServingResult[Double]]]
       .withColumn("value", explode($"value"))
-      .select("value.name", "value.dataType", "value.duration", "value.result")
+      .select("value.name", "value.dataType", "value.submissionTs", "value.result")
 
 
     // Ideally, we would use continuous processing here, but it does not work due to the error

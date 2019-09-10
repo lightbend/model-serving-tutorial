@@ -113,12 +113,6 @@ object SparkStructuredStateModelServer {
         val models = rdd.map(_.value).collect
           .map(ModelToServe.fromByteArray(_)).filter(_.isSuccess).map(_.get)
 
-        // Stop the currently running Spark structured query, so that we can modify
-        // Model's, that are stored in the driver. When we restart below, the new models will be
-        // serialized to the new tasks created for the restarted job.
-        println("Stopping data query")
-        dataQuery.stop
-
         val newModels = models.map(modelToServe => {
           println (s"New model ${modelToServe}")
           // Update state with the new model
@@ -138,6 +132,14 @@ object SparkStructuredStateModelServer {
             currentModels(name).model.cleanup()
           currentModels(name) = value
         }}
+
+        // Stop the currently running Spark structured query, so that we can modify
+        // Model's, that are stored in the driver. When we restart below, the new models will be
+        // serialized to the new tasks created for the restarted job.
+        if(dataQuery.isActive) {
+          println("Stopping data query")
+          dataQuery.stop
+        }
 
         // Restart the streaming query with new models map.
         println("Starting data query")
