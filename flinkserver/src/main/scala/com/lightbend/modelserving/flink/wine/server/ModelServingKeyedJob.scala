@@ -55,7 +55,7 @@ object ModelServingKeyedJob {
   import ModelServingConfiguration._
 
   val defaultIDFileName = "./ModelServingKeyedJob.id"
-  val outputFileName = "./output/flink-keyed.txt"
+//  val outputFileName = "./output/flink-keyed.txt"
 
   /**
    * Entry point. It takes one optional argument, a file path to which the job ID
@@ -172,7 +172,7 @@ object ModelServingKeyedJob {
         println(s"Model served in ${System.currentTimeMillis() - result.submissionTs} ms, with result ${result.result} (model ${result.name}, data type ${result.dataType})")
         result
       }
-      .writeAsText(outputFileName) // Also write the records to a file.
+//      .writeAsText(outputFileName) // Also write the records to a file.
   }
 
   import java.nio.file.{Files, Paths}
