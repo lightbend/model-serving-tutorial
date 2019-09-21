@@ -11,7 +11,8 @@
 
 * [Strata Data Conference San Jose, Tuesday, March 6, 2019](https://conferences.oreilly.com/strata/strata-ca/public/schedule/detail/63983)
 * [Strata Data Conference London, Tuesday, May 22, 2019](https://conferences.oreilly.com/strata/strata-eu/public/schedule/detail/65420)
-* [O'Reilly Artificial Intelligence Conference, Tuesday, Sep 10, 2019](https://conferences.oreilly.com/artificial-intelligence/ai-ca/schedule/2019-09-10)
+* [O'Reilly Artificial Intelligence Conference, Tuesday, Sep 10, 2019](https://conferences.oreilly.com/artificial-intelligence/ai-ca/schedule/2019-09-10) (With [Chaoran Yu](mailto:chaoran.yu@lightbend.com) substituting for Dean)
+* [Strata Data Conference NYC, Tuesday, September 24, 2019](https://conferences.oreilly.com/strata/strata-ny/public/schedule/detail/77136)
 
 ©Copyright 2017-2019, Lightbend, Inc. Apache 2.0 License. Please use as you see fit, at your own risk, but attribution is requested.
 
