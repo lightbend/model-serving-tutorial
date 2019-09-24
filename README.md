@@ -202,8 +202,8 @@ Now you can start the image using the following command:
 docker run -p 8501:8501 --name tfserving_wine --mount type=bind,source=$TUTORIAL_HOME/data/saved,target=/models/wine -e MODEL_NAME=wine -t tensorflow/serving
 ```
 
-* http://localhost:8501/v1/models/recommender/versions/1 to get the status of the deployed model
-* http://localhost:8501/v1/models/recommender/versions/1/metadata to get metadata about deployed model.
+* http://localhost:8501/v1/models/wine/versions/1 to get the status of the deployed model
+* http://localhost:8501/v1/models/wine/versions/1/metadata to get metadata about deployed model.
 
 Rest APIs are also used to serve the model:
 
